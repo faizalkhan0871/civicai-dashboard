@@ -1,5 +1,6 @@
 "use client"
 
+
 import { motion } from "framer-motion"
 import {
   Activity,
@@ -365,6 +366,7 @@ export default function Home() {
     </div>
   </div>
 </section>
+
       </div>
       </div>
       
