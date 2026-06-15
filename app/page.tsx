@@ -50,8 +50,13 @@ export default function Home() {
 </Link>
 
      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
+  <Link
+  href="/analytics"
+  className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white"
+>
   <BarChart3 size={18} />
   <span>Analytics</span>
+</Link>
 </div>
 
       <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
@@ -62,6 +67,59 @@ export default function Home() {
       <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
   <Settings size={18} />
   <span>Settings</span>
+</div>
+<div className="mt-8 rounded-2xl border border-emerald-500/20 bg-slate-900/60 p-4">
+
+  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
+    System Status
+  </p>
+
+  <div className="mt-4 flex items-center gap-2">
+    <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></div>
+
+    <span className="text-sm text-white">
+      Online
+    </span>
+  </div>
+
+  <div className="mt-5">
+
+    <div className="mb-2 flex justify-between text-xs text-slate-400">
+      <span>Storage</span>
+      <span>78%</span>
+    </div>
+
+    <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+      <div className="h-full w-[78%] rounded-full bg-cyan-400"></div>
+    </div>
+
+  </div>
+
+  <div className="mt-5">
+
+    <div className="mb-2 flex justify-between text-xs text-slate-400">
+      <span>AI Engine</span>
+      <span>94%</span>
+    </div>
+
+    <div className="h-2 rounded-full bg-slate-800 overflow-hidden">
+      <div className="h-full w-[94%] rounded-full bg-emerald-400"></div>
+    </div>
+
+  </div>
+
+  <div className="mt-5 rounded-xl bg-slate-950/60 p-3">
+
+    <p className="text-xs text-slate-500">
+      Active Complaints
+    </p>
+
+    <h3 className="mt-2 text-2xl font-bold text-cyan-400">
+      1,248
+    </h3>
+
+  </div>
+
 </div>
 
     </div>
@@ -76,6 +134,19 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-4">
+            <div className="relative">
+
+  <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900/60 transition hover:border-cyan-400 hover:bg-slate-800">
+
+    🔔
+
+  </button>
+
+  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+    3
+  </span>
+
+</div>
             <div className="text-right">
               <p className="text-sm font-semibold text-white">
                 Faizal
@@ -110,6 +181,25 @@ export default function Home() {
             AI-powered monitoring, prioritization and resolution tracking for
             modern city operations.
           </p>
+          <section className="mt-8 flex flex-wrap gap-4">
+
+  <button className="rounded-2xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition hover:scale-105 hover:bg-cyan-400">
+    + New Complaint
+  </button>
+
+  <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-cyan-400">
+    📊 Export Report
+  </button>
+
+  <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-emerald-400">
+    🤖 AI Analysis
+  </button>
+
+  <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-orange-400">
+    ⚡ Live Monitor
+  </button>
+
+</section>
         </motion.div>
 
         <div className="mt-10 grid gap-6 md:grid-cols-3">
@@ -118,7 +208,7 @@ export default function Home() {
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.6, delay: 0.2 }}
-    className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:border-slate-700 hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]"
+    className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:border-cyan-400 hover:shadow-[0_0_40px_rgba(6,182,212,0.25)]"
   >
     <div className="flex items-center justify-between">
   <p className="text-sm text-slate-400">
@@ -186,7 +276,7 @@ export default function Home() {
   </h2>
 </div>
 
-  <div className="mt-6 grid gap-6 lg:grid-cols-3">
+  <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
     <motion.div
       initial={{ opacity: 0, y: 40 }}
@@ -245,6 +335,70 @@ export default function Home() {
         </p>
       </div>
     </motion.div>
+    <motion.div
+  initial={{ opacity: 0, y: 40 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.7, delay: 0.7 }}
+  className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 transition-all duration-500 hover:-translate-y-3 hover:border-slate-700 hover:shadow-[0_25px_80px_rgba(0,0,0,0.45)]"
+>
+
+  <div className="h-52 overflow-hidden">
+    <img
+      src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
+      alt="Garbage Collection"
+      className="h-full w-full object-cover transition duration-700 hover:scale-110"
+    />
+  </div>
+
+  <div className="p-5">
+
+    <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">
+      Normal
+    </span>
+
+    <h3 className="mt-4 text-xl font-semibold text-white">
+      Garbage Collection Pending
+    </h3>
+
+    <p className="mt-2 text-sm text-slate-400">
+      Ward 8 • Reported 40 mins ago
+    </p>
+
+  </div>
+
+</motion.div>
+<motion.div
+  initial={{ opacity: 0, y: 40 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.7, delay: 0.7 }}
+  className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 transition-all duration-500 hover:-translate-y-3 hover:border-slate-700 hover:shadow-[0_25px_80px_rgba(0,0,0,0.45)]"
+>
+
+  <div className="h-52 overflow-hidden">
+    <img
+     src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200"
+      alt="Smart City"
+      className="h-full w-full object-cover transition duration-700 hover:scale-110"
+    />
+  </div>
+
+  <div className="p-5">
+
+    <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">
+      Medium Priority
+    </span>
+
+    <h3 className="mt-4 text-xl font-semibold text-white">
+      Smart City Infrastructure Inspection
+    </h3>
+
+    <p className="mt-2 text-sm text-slate-400">
+      Ward 8 • Reported 35 mins ago
+    </p>
+
+  </div>
+
+</motion.div>
 
   </div>
 </section>
@@ -369,6 +523,57 @@ export default function Home() {
 
     </div>
   </div>
+</section>
+<section className="mt-12 grid gap-6 md:grid-cols-3">
+
+  <div className="rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6 transition hover:scale-[1.02] hover:border-cyan-400">
+
+    <p className="text-sm text-slate-400">
+      Tomorrow Prediction
+    </p>
+
+    <h2 className="mt-4 text-5xl font-bold text-cyan-400">
+      142
+    </h2>
+
+    <p className="mt-3 text-slate-400">
+      Expected complaints based on AI forecast
+    </p>
+
+  </div>
+
+  <div className="rounded-3xl border border-emerald-500/20 bg-slate-900/60 p-6 transition hover:scale-[1.02] hover:border-emerald-400">
+
+    <p className="text-sm text-slate-400">
+      Resolution Rate
+    </p>
+
+    <h2 className="mt-4 text-5xl font-bold text-emerald-400">
+      96%
+    </h2>
+
+    <p className="mt-3 text-slate-400">
+      AI estimated success rate
+    </p>
+
+  </div>
+
+  <div className="rounded-3xl border border-orange-500/20 bg-slate-900/60 p-6 transition hover:scale-[1.02] hover:border-orange-400">
+
+    <p className="text-sm text-slate-400">
+      High Risk Areas
+    </p>
+
+    <h2 className="mt-4 text-5xl font-bold text-orange-400">
+      08
+    </h2>
+
+    <p className="mt-3 text-slate-400">
+      Require immediate monitoring
+    </p>
+
+  </div>
+
 </section>
 
       </div>
