@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 
 
 import { motion } from "framer-motion"
@@ -40,10 +41,13 @@ export default function Home() {
   <span>Dashboard</span>
 </div>
 
-      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
+      <Link
+  href="/complaints"
+  className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white"
+>
   <FileText size={18} />
   <span>Complaints</span>
-</div>
+</Link>
 
      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
   <BarChart3 size={18} />
