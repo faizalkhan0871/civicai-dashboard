@@ -1,4 +1,5 @@
 "use client";
+import { motion } from "framer-motion";
 import {
   BarChart,
   Bar,
@@ -33,34 +34,44 @@ export default function AnalyticsPage() {
         <p className="mt-4 max-w-3xl text-lg text-slate-400">
           AI powered analytics and performance insights for civic complaints.
         </p>
-        <section className="mt-10 grid gap-6 md:grid-cols-4">
+        <motion.section
+  initial={{ opacity: 0, y: 40 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="mt-10 grid gap-6 md:grid-cols-4"
+>
 
-  <div className="rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6">
+  <div className="rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(34,211,238,0.20)]">
     <p className="text-sm text-slate-400">Total Reports</p>
     <h2 className="mt-4 text-5xl font-bold text-cyan-400">12.4K</h2>
     <p className="mt-3 text-emerald-400">+12% this month</p>
   </div>
 
-  <div className="rounded-3xl border border-emerald-500/20 bg-slate-900/60 p-6">
+  <div className="rounded-3xl border border-emerald-500/20 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(16,185,129,0.20)]">
     <p className="text-sm text-slate-400">Resolved Rate</p>
     <h2 className="mt-4 text-5xl font-bold text-emerald-400">91%</h2>
     <p className="mt-3 text-cyan-400">Excellent performance</p>
   </div>
 
-  <div className="rounded-3xl border border-orange-500/20 bg-slate-900/60 p-6">
+  <div className="rounded-3xl border border-orange-500/20 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(251,146,60,0.20)]">
     <p className="text-sm text-slate-400">Avg Response</p>
     <h2 className="mt-4 text-5xl font-bold text-orange-400">2.4h</h2>
     <p className="mt-3 text-orange-300">AI optimized</p>
   </div>
 
-  <div className="rounded-3xl border border-purple-500/20 bg-slate-900/60 p-6">
+  <div className="rounded-3xl border border-purple-500/20 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(168,85,247,0.20)]">
     <p className="text-sm text-slate-400">AI Accuracy</p>
     <h2 className="mt-4 text-5xl font-bold text-purple-400">96%</h2>
     <p className="mt-3 text-purple-300">Prediction engine</p>
   </div>
 
-</section>
-<section className="mt-10 rounded-3xl border border-slate-800 bg-slate-900/60 p-8">
+</motion.section>
+<motion.section
+  initial={{ opacity: 0, y: 40 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="mt-10 rounded-3xl border border-slate-800 bg-slate-900/60 p-8 transition-all duration-300 hover:border-cyan-400 hover:shadow-[0_0_50px_rgba(34,211,238,0.12)]"
+>
 
   <div className="mb-8">
 
@@ -125,10 +136,15 @@ export default function AnalyticsPage() {
   </ResponsiveContainer>
 
 </div>
-</section>
+</motion.section>
 {/* AI Performance Panel Start */}
 
-<section className="mt-10 rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-slate-900 to-slate-950 p-8">
+<motion.section
+  initial={{ opacity: 0, y: 40 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="mt-10 rounded-3xl border border-emerald-500/20 bg-gradient-to-r from-slate-900 to-slate-950 p-8 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_0_60px_rgba(16,185,129,0.15)]"
+>
 
   <p className="text-sm uppercase tracking-[0.3em] text-emerald-400">
     AI PERFORMANCE
@@ -140,24 +156,24 @@ export default function AnalyticsPage() {
 
   <div className="mt-8 grid gap-6 md:grid-cols-3">
 
-    <div>
+    <div className="rounded-2xl p-4 transition-all duration-300 hover:bg-slate-800/30 hover:-translate-y-2">
       <p className="text-slate-400">Prediction Accuracy</p>
       <h3 className="mt-2 text-5xl font-bold text-emerald-400">96%</h3>
     </div>
 
-    <div>
+    <div className="rounded-2xl p-4 transition-all duration-300 hover:bg-slate-800/30 hover:-translate-y-2">
       <p className="text-slate-400">Average Resolution</p>
       <h3 className="mt-2 text-5xl font-bold text-cyan-400">2.1h</h3>
     </div>
 
-    <div>
+    <div className="rounded-2xl p-4 transition-all duration-300 hover:bg-slate-800/30 hover:-translate-y-2">
       <p className="text-slate-400">Citizen Satisfaction</p>
       <h3 className="mt-2 text-5xl font-bold text-orange-400">4.8★</h3>
     </div>
 
   </div>
 
-</section>
+</motion.section>
 
 {/* AI Performance Panel End */}
 

@@ -45,31 +45,43 @@ export default function Home() {
 
       <Link
   href="/complaints"
-  className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white"
+  className="group flex items-center gap-3 rounded-2xl px-4 py-4 text-slate-400 transition-all duration-300 hover:translate-x-2 hover:bg-slate-800/60 hover:text-cyan-400 hover:shadow-[0_0_25px_rgba(34,211,238,0.12)]"
 >
-  <FileText size={18} />
+  <FileText
+    size={18}
+    className="transition-all duration-300 group-hover:text-cyan-400"
+  />
   <span>Complaints</span>
 </Link>
 
      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
   <Link
   href="/analytics"
-  className="group flex items-center gap-3 rounded-2xl px-4 py-4 text-slate-400 transition-all duration-300 hover:translate-x-1 hover:bg-slate-800/60 hover:text-white"
+  className="group flex items-center gap-3 rounded-2xl px-4 py-4 text-slate-400 transition-all duration-300 hover:translate-x-2 hover:bg-slate-800/60 hover:text-cyan-400 hover:shadow-[0_0_25px_rgba(34,211,238,0.12)]"
 >
-  <BarChart3 size={18} />
+  <BarChart3
+  size={18}
+  className="transition-all duration-300 group-hover:text-cyan-400"
+/>
   <span>Analytics</span>
 </Link>
 </div>
 
-      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
+      <Link
+  href="/ai-insights"
+  className="group flex items-center gap-3 rounded-2xl px-4 py-4 text-slate-400 transition-all duration-300 hover:translate-x-1 hover:bg-slate-800/60 hover:text-white"
+>
   <Sparkles size={18} />
   <span>AI Insights</span>
-</div>
+</Link>
 
-      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
+      <Link
+  href="/settings"
+  className="group flex items-center gap-3 rounded-2xl px-4 py-4 text-slate-400 transition-all duration-300 hover:translate-x-1 hover:bg-slate-800/60 hover:text-white"
+>
   <Settings size={18} />
   <span>Settings</span>
-</div>
+</Link>
 <div className="mt-8 rounded-2xl border border-emerald-500/20 bg-slate-900/60 p-4">
 
   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
