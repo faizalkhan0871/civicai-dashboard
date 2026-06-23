@@ -1,4 +1,6 @@
 "use client"
+import CountUp from "react-countup";
+import Hero from "@/components/Hero";
 import Link from "next/link"
 
 
@@ -26,17 +28,17 @@ export default function Home() {
         <div className="absolute bottom-0 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl" />
       </div>
 
-      <div className="mx-auto flex max-w-7xl gap-6 px-6 py-8">
-        <aside className="hidden lg:block w-64 shrink-0">
+      <div className="mx-auto flex w-full max-w-[1700px] gap-6 px-4 py-6 lg:px-8">
+        <aside className="hidden xl:block w-72 shrink-0">
   <div className="sticky top-6 rounded-3xl border border-slate-800 bg-slate-900/60 p-5 backdrop-blur-xl">
 
     <h2 className="text-lg font-bold text-white">
       CivicAI
     </h2>
 
-    <div className="mt-6 space-y-3">
+    <div className="mt-8 space-y-2">
 
-      <div className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-3 text-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.15)]">
+      <div className="group flex items-center gap-3 rounded-2xl border border-cyan-500/20 bg-cyan-500/10 px-4 py-4 text-cyan-400 transition-all duration-300 hover:translate-x-1 hover:border-cyan-400 hover:shadow-[0_0_30px_rgba(6,182,212,0.2)] shadow-[0_0_20px_rgba(6,182,212,0.15)]">
   <LayoutDashboard size={18} />
   <span>Dashboard</span>
 </div>
@@ -52,7 +54,7 @@ export default function Home() {
      <div className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white cursor-pointer">
   <Link
   href="/analytics"
-  className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-400 transition-all duration-300 hover:bg-slate-800/50 hover:text-white"
+  className="group flex items-center gap-3 rounded-2xl px-4 py-4 text-slate-400 transition-all duration-300 hover:translate-x-1 hover:bg-slate-800/60 hover:text-white"
 >
   <BarChart3 size={18} />
   <span>Analytics</span>
@@ -126,7 +128,7 @@ export default function Home() {
   </div>
 </aside>
 <div className="flex-1">
-        <header className="flex items-center justify-between rounded-3xl border border-slate-800 bg-slate-900/60 px-6 py-4 backdrop-blur-xl">
+        <header className="sticky top-4 z-30 flex items-center justify-between rounded-3xl border border-slate-800/80 bg-slate-900/70 px-5 py-4 backdrop-blur-2xl shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
           <div>
             <h1 className="text-xl font-bold text-white">
               CivicAI Command Center
@@ -173,15 +175,16 @@ export default function Home() {
             Civic Intelligence Platform
           </p>
 
-          <h1 className="mt-4 text-5xl font-bold text-white">
+          <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl xl:text-7xl">
             Smart Civic Complaint Management
           </h1>
 
-          <p className="mt-4 max-w-2xl text-slate-400">
-            AI-powered monitoring, prioritization and resolution tracking for
-            modern city operations.
-          </p>
-          <section className="mt-8 flex flex-wrap gap-4">
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300 md:text-xl">
+  AI-powered monitoring, intelligent prioritization and real-time resolution
+  tracking for smarter city operations. Built to help administrators monitor,
+  analyze and resolve civic complaints efficiently.
+</p>
+          <section className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap">
 
   <button className="rounded-2xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition hover:scale-105 hover:bg-cyan-400">
     + New Complaint
@@ -202,7 +205,7 @@ export default function Home() {
 </section>
         </motion.div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
 
   <motion.div
     initial={{ opacity: 0, y: 30 }}
@@ -218,9 +221,9 @@ export default function Home() {
   <Activity size={20} className="text-cyan-400" />
 </div>
 
-    <h2 className="mt-3 text-4xl font-bold text-white">
-      1,248
-    </h2>
+    <h2 className="mt-3 text-5xl font-black tracking-tight text-white">
+  <CountUp end={1248} duration={2} separator="," />
+</h2>
 
     <p className="mt-2 text-sm text-green-400">
       +8.4% this week
@@ -237,8 +240,8 @@ export default function Home() {
 </div>
 
     <h2 className="mt-3 text-5xl font-black tracking-tight text-white">
-      932
-    </h2>
+  <CountUp end={932} duration={2} />
+</h2>
 
     <p className="mt-2 text-sm text-cyan-400">
       +5.1% this week
@@ -254,9 +257,9 @@ export default function Home() {
   <AlertTriangle size={20} className="text-orange-400" />
 </div>
 
-    <h2 className="mt-3 text-4xl font-bold text-white">
-      18
-    </h2>
+    <h2 className="mt-3 text-5xl font-black tracking-tight text-white">
+  <CountUp end={18} duration={2} />
+</h2>
 
     <p className="mt-2 text-sm text-orange-400">
       Needs attention
@@ -376,7 +379,7 @@ export default function Home() {
 
   <div className="h-52 overflow-hidden">
     <img
-     src="https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1200"
+      src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
       alt="Smart City"
       className="h-full w-full object-cover transition duration-700 hover:scale-110"
     />
@@ -526,7 +529,7 @@ export default function Home() {
 </section>
 <section className="mt-12 grid gap-6 md:grid-cols-3">
 
-  <div className="rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6 transition hover:scale-[1.02] hover:border-cyan-400">
+  <div className="rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6 transition hover:scale-[1.02] hover:border-cyan-300 hover:shadow-[0_0_60px_rgba(6,182,212,0.35)]">
 
     <p className="text-sm text-slate-400">
       Tomorrow Prediction

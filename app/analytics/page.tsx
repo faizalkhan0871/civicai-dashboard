@@ -1,3 +1,22 @@
+"use client";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+const data = [
+  { day: "Mon", complaints: 42 },
+  { day: "Tue", complaints: 65 },
+  { day: "Wed", complaints: 91 },
+  { day: "Thu", complaints: 58 },
+  { day: "Fri", complaints: 104 },
+  { day: "Sat", complaints: 73 },
+  { day: "Sun", complaints: 118 },
+];
 export default function AnalyticsPage() {
   return (
     <main className="min-h-screen bg-[#020617] text-white">
@@ -55,45 +74,57 @@ export default function AnalyticsPage() {
 
   </div>
 
-  <div className="flex h-80 items-end justify-between gap-4">
+  <div className="h-80 w-full">
 
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-24 w-14 rounded-t-2xl bg-cyan-500"></div>
-      <span className="text-slate-400">Mon</span>
-    </div>
+  <ResponsiveContainer width="100%" height="100%">
 
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-36 w-14 rounded-t-2xl bg-cyan-500"></div>
-      <span className="text-slate-400">Tue</span>
-    </div>
+    <BarChart data={data}>
+<CartesianGrid
+  stroke="#1e293b"
+  strokeDasharray="4 4"
+  vertical={false}
+/>
 
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-52 w-14 rounded-t-2xl bg-cyan-500"></div>
-      <span className="text-slate-400">Wed</span>
-    </div>
+<YAxis
+  stroke="#64748b"
+  axisLine={false}
+  tickLine={false}
+/>
+      <XAxis
+        dataKey="day"
+        stroke="#94a3b8"
+      />
 
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-32 w-14 rounded-t-2xl bg-cyan-500"></div>
-      <span className="text-slate-400">Thu</span>
-    </div>
+      <Tooltip
+        contentStyle={{
+          background: "#020617",
+          border: "1px solid #1e293b",
+          borderRadius: "12px",
+          color: "#fff",
+        }}
+      />
 
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-64 w-14 rounded-t-2xl bg-cyan-500"></div>
-      <span className="text-slate-400">Fri</span>
-    </div>
+      <>
+  <defs>
+    <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#22d3ee" />
+      <stop offset="100%" stopColor="#0891b2" />
+    </linearGradient>
+  </defs>
 
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-40 w-14 rounded-t-2xl bg-cyan-500"></div>
-      <span className="text-slate-400">Sat</span>
-    </div>
+  <Bar
+    dataKey="complaints"
+    fill="url(#barGradient)"
+    radius={[14, 14, 0, 0]}
+    animationDuration={1800}
+  />
+</>
 
-    <div className="flex flex-col items-center gap-3">
-      <div className="h-72 w-14 rounded-t-2xl bg-cyan-500"></div>
-      <span className="text-slate-400">Sun</span>
-    </div>
+    </BarChart>
 
-  </div>
+  </ResponsiveContainer>
 
+</div>
 </section>
 {/* AI Performance Panel Start */}
 
@@ -129,83 +160,7 @@ export default function AnalyticsPage() {
 </section>
 
 {/* AI Performance Panel End */}
-<section className="mt-10 rounded-3xl border border-slate-800 bg-slate-900/60 p-8">
 
-  <div className="mb-8">
-    <p className="text-sm uppercase tracking-[0.3em] text-cyan-400">
-      CITY PERFORMANCE
-    </p>
-
-    <h2 className="mt-2 text-4xl font-bold text-white">
-      Top Performing Wards
-    </h2>
-  </div>
-
-  <div className="overflow-hidden rounded-2xl border border-slate-800">
-
-    <table className="w-full">
-
-      <thead className="bg-slate-950/60">
-
-        <tr className="text-left text-slate-400">
-
-          <th className="px-6 py-4">Ward</th>
-          <th className="px-6 py-4">Complaints</th>
-          <th className="px-6 py-4">Resolved</th>
-          <th className="px-6 py-4">Efficiency</th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        <tr className="border-t border-slate-800 hover:bg-slate-800/30 transition">
-
-          <td className="px-6 py-5 font-semibold">Ward 5</td>
-          <td className="px-6 py-5">248</td>
-          <td className="px-6 py-5 text-emerald-400">231</td>
-          <td className="px-6 py-5">
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-sm text-emerald-400">
-              93%
-            </span>
-          </td>
-
-        </tr>
-
-        <tr className="border-t border-slate-800 hover:bg-slate-800/30 transition">
-
-          <td className="px-6 py-5 font-semibold">Ward 11</td>
-          <td className="px-6 py-5">196</td>
-          <td className="px-6 py-5 text-cyan-400">178</td>
-          <td className="px-6 py-5">
-            <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-sm text-cyan-400">
-              91%
-            </span>
-          </td>
-
-        </tr>
-
-        <tr className="border-t border-slate-800 hover:bg-slate-800/30 transition">
-
-          <td className="px-6 py-5 font-semibold">Ward 7</td>
-          <td className="px-6 py-5">154</td>
-          <td className="px-6 py-5 text-orange-400">136</td>
-          <td className="px-6 py-5">
-            <span className="rounded-full bg-orange-500/20 px-3 py-1 text-sm text-orange-400">
-              88%
-            </span>
-          </td>
-
-        </tr>
-
-      </tbody>
-
-    </table>
-
-  </div>
-
-</section>
 
       </div>
     </main>
