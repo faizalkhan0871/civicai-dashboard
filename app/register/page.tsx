@@ -1,0 +1,81 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import api from "@/lib/api";
+
+export default function RegisterPage() {
+  const router = useRouter();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      setLoading(true);
+
+      await api.post("/auth/register", {
+        name,
+        email,
+        password,
+      });
+
+      alert("Registration Successful ✅");
+
+      router.push("/login");
+    } catch (err: any) {
+      alert(err?.response?.data?.message || "Registration Failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <form
+        onSubmit={handleRegister}
+        className="w-full max-w-md rounded-2xl bg-slate-900 p-8 shadow-xl"
+      >
+        <h1 className="mb-6 text-center text-3xl font-bold text-white">
+          CivicAI Register
+        </h1>
+
+        <input
+          type="text"
+          placeholder="Full Name"
+          className="mb-4 w-full rounded-lg border border-slate-700 bg-slate-800 p-3 text-white"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <input
+          type="email"
+          placeholder="Email"
+          className="mb-4 w-full rounded-lg border border-slate-700 bg-slate-800 p-3 text-white"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          className="mb-6 w-full rounded-lg border border-slate-700 bg-slate-800 p-3 text-white"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full rounded-lg bg-cyan-500 p-3 font-semibold text-black hover:bg-cyan-400"
+        >
+          {loading ? "Registering..." : "Register"}
+        </button>
+      </form>
+    </div>
+  );
+}

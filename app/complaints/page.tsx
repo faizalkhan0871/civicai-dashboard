@@ -1,6 +1,25 @@
 "use client";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { getComplaints } from "@/services/complaintService";
 export default function ComplaintsPage() {
+  const [complaints, setComplaints] = useState<any[]>([]);
+const resolvedComplaints = complaints.filter(
+  (c) => c.status === "Resolved"
+);
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      try {
+        const data = await getComplaints();
+        console.log("Complaints:", data);
+        setComplaints(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchComplaints();
+  }, []);
   return (
     <main className="min-h-screen bg-[#020617] text-white">
       <div className="mx-auto max-w-7xl px-8 py-10">
@@ -26,7 +45,9 @@ export default function ComplaintsPage() {
 
   <div className="rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(34,211,238,0.20)]">
     <p className="text-sm text-slate-400">Total Complaints</p>
-    <h2 className="mt-3 text-5xl font-bold text-cyan-400">1,248</h2>
+    <h2 className="mt-3 text-5xl font-bold text-cyan-400">
+  {complaints.length}
+</h2>
     <p className="mt-3 text-emerald-400">+8% this week</p>
   </div>
 
@@ -95,52 +116,33 @@ export default function ComplaintsPage() {
     </thead>
 
     <tbody>
+  {complaints.map((complaint: any) => (
+    <tr
+      key={complaint._id}
+      className="border-b border-slate-800 hover:bg-slate-800/30 transition"
+    >
+      <td className="px-6 py-5 font-semibold">
+        {complaint._id.slice(-6)}
+      </td>
 
-      <tr className="border-b border-slate-800 hover:bg-slate-800/30 transition">
+      <td className="px-6 py-5">
+        {complaint.title}
+      </td>
 
-        <td className="px-6 py-5 font-semibold">#1024</td>
+      <td className="px-6 py-5">
+        {complaint.location}
+      </td>
 
-        <td className="px-6 py-5">Road Damage</td>
+      <td className="px-6 py-5">
+        {complaint.priority}
+      </td>
 
-        <td className="px-6 py-5">Ward 5</td>
-
-        <td className="px-6 py-5">
-          <span className="rounded-full bg-orange-500/20 px-3 py-1 text-xs text-orange-300">
-            High
-          </span>
-        </td>
-
-        <td className="px-6 py-5">
-          <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs text-cyan-300">
-            In Progress
-          </span>
-        </td>
-
-      </tr>
-
-      <tr className="hover:bg-slate-800/30 transition">
-
-        <td className="px-6 py-5 font-semibold">#1025</td>
-
-        <td className="px-6 py-5">Water Leakage</td>
-
-        <td className="px-6 py-5">Ward 11</td>
-
-        <td className="px-6 py-5">
-          <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs text-red-300">
-            Critical
-          </span>
-        </td>
-
-        <td className="px-6 py-5">
-          <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs text-emerald-300">
-            Resolved
-          </span>
-        </td>
-
-      </tr>
-
-    </tbody>
+      <td className="px-6 py-5">
+        {complaint.status}
+      </td>
+    </tr>
+  ))}
+</tbody>
 
   </table>
 

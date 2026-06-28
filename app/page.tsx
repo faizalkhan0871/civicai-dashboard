@@ -2,7 +2,8 @@
 import CountUp from "react-countup";
 import Hero from "@/components/Hero";
 import Link from "next/link"
-
+import { useEffect, useState } from "react";
+import { getDashboardStats } from "@/services/dashboardService";
 
 import { motion } from "framer-motion"
 import {
@@ -20,6 +21,25 @@ import {
 } from "lucide-react"
 
 export default function Home() {
+  const [stats, setStats] = useState({
+  total: 0,
+  pending: 0,
+  inProgress: 0,
+  resolved: 0,
+});
+
+useEffect(() => {
+  const fetchStats = async () => {
+    try {
+      const data = await getDashboardStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to load dashboard stats:", error);
+    }
+  };
+
+  fetchStats();
+}, []);
   return (
     <main className="min-h-screen bg-[#020617] relative overflow-hidden">
       <div className="absolute inset-0 -z-10">
@@ -234,7 +254,7 @@ export default function Home() {
 </div>
 
     <h2 className="mt-3 text-5xl font-black tracking-tight text-white">
-  <CountUp end={1248} duration={2} separator="," />
+  <CountUp end={stats.total} duration={2} separator="," />
 </h2>
 
     <p className="mt-2 text-sm text-green-400">

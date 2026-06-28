@@ -1,3 +1,4 @@
+import Link from "next/link";
 export default function Hero() {
   return (
     <section className="mb-10">
@@ -19,9 +20,12 @@ export default function Hero() {
 
       <div className="mt-8 flex flex-wrap gap-4">
 
-        <button className="rounded-2xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition hover:scale-105 hover:bg-cyan-400">
-          + New Complaint
-        </button>
+        <Link
+  href="/complaints"
+  className="rounded-2xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition hover:scale-105 hover:bg-cyan-400"
+>
+  + New Complaint
+</Link>
 
         <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-cyan-400">
           📊 Export Report
