@@ -21,7 +21,7 @@ export default function Hero() {
       <div className="mt-8 flex flex-wrap gap-4">
 
         <Link
-  href="/complaints"
+  href="/create-complaint"
   className="rounded-2xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition hover:scale-105 hover:bg-cyan-400"
 >
   + New Complaint

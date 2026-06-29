@@ -11,3 +11,15 @@ export const getComplaints = async () => {
 
   return response.data;
 };
+
+export const createComplaint = async (complaintData: any) => {
+  const token = localStorage.getItem("token");
+
+  const response = await api.post("/complaints", complaintData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};
