@@ -37,11 +37,14 @@ const registerUser = async (req, res) => {
 };
 
 // Login User
+// Login User
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
     const user = await User.findOne({ email });
+
+    console.log("USER FOUND:", user);
 
     if (!user) {
       return res.status(400).json({
@@ -49,7 +52,12 @@ const loginUser = async (req, res) => {
       });
     }
 
+    console.log("Entered Password:", password);
+    console.log("DB Hash:", user.password);
+
     const isMatch = await bcrypt.compare(password, user.password);
+
+    console.log("Password Match:", isMatch);
 
     if (!isMatch) {
       return res.status(400).json({
@@ -78,9 +86,7 @@ const loginUser = async (req, res) => {
       message: error.message,
     });
   }
-};
-
-module.exports = {
+};module.exports = {
   registerUser,
   loginUser,
 };

@@ -28,8 +28,12 @@ export default function RegisterPage() {
 
       router.push("/login");
     } catch (err: any) {
-      alert(err?.response?.data?.message || "Registration Failed");
-    } finally {
+  console.log(err);
+  console.log(err.response);
+  console.log(err.response?.data);
+
+  alert(err?.response?.data?.message || "Registration Failed");
+}finally {
       setLoading(false);
     }
   };
