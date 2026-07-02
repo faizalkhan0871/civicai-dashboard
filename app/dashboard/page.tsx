@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDashboardStats } from "@/services/dashboardService";
+import { getComplaints } from "@/services/complaintService";
 
 import { motion } from "framer-motion"
 import {
@@ -29,8 +30,52 @@ export default function Home() {
   pending: 0,
   inProgress: 0,
   resolved: 0,
+  critical: 0,
 });
+const exportCSV = async () => {
+  try {
+    const complaints = await getComplaints();
 
+    const headers = [
+      "Title",
+      "Category",
+      "Location",
+      "Priority",
+      "Status",
+    ];
+
+    const rows = complaints.map((complaint: any) => [
+  `"${complaint.title}"`,
+  `"${complaint.category}"`,
+  `"${complaint.location}"`,
+  `"${complaint.priority}"`,
+  `"${complaint.status}"`,
+]);
+    const csvContent = [
+      headers.join(","),
+      ...rows.map((row: any) => row.join(",")),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = "complaints.csv";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error(error);
+  }
+};
 const handleLogout = () => {
   localStorage.removeItem("token");
   router.push("/login");
@@ -238,9 +283,12 @@ useEffect(() => {
 >
   + New Complaint
 </Link>
-  <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-cyan-400">
-    📊 Export Report
-  </button>
+  <button
+  onClick={exportCSV}
+  className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-cyan-400"
+>
+  📊 Export Report
+</button>
 
   <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-emerald-400">
     🤖 AI Analysis
@@ -306,7 +354,7 @@ useEffect(() => {
 </div>
 
     <h2 className="mt-3 text-5xl font-black tracking-tight text-white">
-  <CountUp end={stats.pending} duration={2} />
+  <CountUp end={stats.critical} duration={2} />
 </h2>
 
     <p className="mt-2 text-sm text-orange-400">

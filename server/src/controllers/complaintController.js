@@ -95,13 +95,16 @@ const getDashboardStats = async (req, res) => {
     const resolved = await Complaint.countDocuments({
       status: "Resolved",
     });
-
+const critical = await Complaint.countDocuments({
+  priority: "High",
+});
     res.status(200).json({
-      total,
-      pending,
-      inProgress,
-      resolved,
-    });
+  total,
+  pending,
+  inProgress,
+  resolved,
+  critical,
+});
 
   } catch (error) {
     res.status(500).json({
