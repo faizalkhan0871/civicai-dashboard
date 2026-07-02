@@ -157,8 +157,8 @@ useEffect(() => {
     </p>
 
     <h3 className="mt-2 text-2xl font-bold text-cyan-400">
-      1,248
-    </h3>
+  <CountUp end={stats.total} duration={2} separator="," />
+</h3>
 
   </div>
 
@@ -288,7 +288,7 @@ useEffect(() => {
 </div>
 
     <h2 className="mt-3 text-5xl font-black tracking-tight text-white">
-  <CountUp end={932} duration={2} />
+  <CountUp end={stats.resolved} duration={2} />
 </h2>
 
     <p className="mt-2 text-sm text-cyan-400">
@@ -306,7 +306,7 @@ useEffect(() => {
 </div>
 
     <h2 className="mt-3 text-5xl font-black tracking-tight text-white">
-  <CountUp end={18} duration={2} />
+  <CountUp end={stats.pending} duration={2} />
 </h2>
 
     <p className="mt-2 text-sm text-orange-400">

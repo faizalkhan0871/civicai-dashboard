@@ -7,6 +7,7 @@ export default function CreateComplaintPage() {
   title: "",
   description: "",
   category: "Road Damage",
+  priority: "Medium",
   location: "",
 });
 const handleSubmit = async (e: React.FormEvent) => {
@@ -96,6 +97,26 @@ const handleSubmit = async (e: React.FormEvent) => {
   <option>Other</option>
 </select>
   </div>
+  <div>
+  <label className="mb-2 block text-sm text-slate-300">
+    Priority
+  </label>
+
+  <select
+    value={formData.priority}
+    onChange={(e) =>
+      setFormData({
+        ...formData,
+        priority: e.target.value,
+      })
+    }
+    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 outline-none focus:border-cyan-400"
+  >
+    <option value="Low">Low</option>
+    <option value="Medium">Medium</option>
+    <option value="High">High</option>
+  </select>
+</div>
 
   <div>
     <label className="mb-2 block text-sm text-slate-300">

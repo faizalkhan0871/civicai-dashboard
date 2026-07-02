@@ -1,12 +1,94 @@
 "use client";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { getComplaints } from "@/services/complaintService";
+import {
+  getComplaints,
+  deleteComplaint,
+  updateComplaint,
+} from "@/services/complaintService";
 export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState("");
+const [editingStatus, setEditingStatus] = useState("");
+const [search, setSearch] = useState("");
+const [filter, setFilter] = useState("All");
 const resolvedComplaints = complaints.filter(
   (c) => c.status === "Resolved"
 );
+const pendingComplaints = complaints.filter(
+  (c) => c.status === "Pending"
+);
+
+const criticalComplaints = complaints.filter(
+  (c) => c.priority === "High"
+);
+const filteredComplaints = complaints.filter((complaint) => {
+  const matchesSearch =
+    complaint.title.toLowerCase().includes(search.toLowerCase()) ||
+    complaint.location.toLowerCase().includes(search.toLowerCase());
+
+  if (filter === "Pending") {
+    return matchesSearch && complaint.status === "Pending";
+  }
+
+  if (filter === "Resolved") {
+    return matchesSearch && complaint.status === "Resolved";
+  }
+
+  if (filter === "Critical") {
+    return matchesSearch && complaint.priority === "High";
+  }
+
+  return matchesSearch;
+});
+const handleDelete = async (id: string) => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this complaint?"
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await deleteComplaint(id);
+
+    setComplaints((prev) =>
+      prev.filter((complaint) => complaint._id !== id)
+    );
+
+    alert("Complaint deleted successfully");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to delete complaint");
+  }
+};
+const handleUpdateStatus = async () => {
+  try {
+    await updateComplaint(editingId, {
+      status: editingStatus,
+    });
+
+    setComplaints((prev) =>
+      prev.map((complaint) =>
+        complaint._id === editingId
+          ? { ...complaint, status: editingStatus }
+          : complaint
+      )
+    );
+
+    alert("Complaint updated successfully");
+
+    setEditingId("");
+    setEditingStatus("");
+  } catch (error) {
+    console.error(error);
+    alert("Update failed");
+  }
+};
+useEffect(() => {
+  if (editingId && editingStatus) {
+    handleUpdateStatus();
+  }
+}, [editingStatus]);
   useEffect(() => {
     const fetchComplaints = async () => {
       try {
@@ -53,13 +135,13 @@ const resolvedComplaints = complaints.filter(
 
   <div className="rounded-3xl border border-emerald-500/20 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(16,185,129,0.20)]">
     <p className="text-sm text-slate-400">Resolved</p>
-    <h2 className="mt-3 text-5xl font-bold text-emerald-400">932</h2>
+    <h2 className="mt-3 text-5xl font-bold text-emerald-400">{resolvedComplaints.length}</h2>
     <p className="mt-3 text-cyan-400">75% completion</p>
   </div>
 
   <div className="rounded-3xl border border-orange-500/20 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-[0_0_40px_rgba(251,146,60,0.20)]">
     <p className="text-sm text-slate-400">Critical Cases</p>
-    <h2 className="mt-3 text-5xl font-bold text-orange-400">18</h2>
+    <h2 className="mt-3 text-5xl font-bold text-orange-400">{criticalComplaints.length}</h2>
     <p className="mt-3 text-orange-300">Needs attention</p>
   </div>
 
@@ -69,29 +151,58 @@ const resolvedComplaints = complaints.filter(
   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
 
     <input
-      type="text"
-      placeholder="🔍 Search complaints..."
-      className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 py-4 text-white outline-none transition focus:border-cyan-400 lg:max-w-md"
-    />
+  type="text"
+  placeholder="🔍 Search complaints..."
+  value={search}
+  onChange={(e) => setSearch(e.target.value)}
+  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 py-4 text-white outline-none transition focus:border-cyan-400 lg:max-w-md"
+/>
 
     <div className="flex flex-wrap gap-3">
 
-      <button className="rounded-full bg-cyan-500 px-5 py-2 font-medium text-slate-950">
-        All
-      </button>
+      <button
+  onClick={() => setFilter("All")}
+  className={`rounded-full px-5 py-2 font-medium transition ${
+    filter === "All"
+      ? "bg-cyan-500 text-slate-950"
+      : "border border-cyan-500/30 text-cyan-400 hover:bg-cyan-500 hover:text-slate-950"
+  }`}
+>
+  All
+</button>
 
-      <button className="rounded-full border border-orange-500/30 px-5 py-2 text-orange-400">
-        Pending
-      </button>
+      <button
+  onClick={() => setFilter("Pending")}
+  className={`rounded-full px-5 py-2 font-medium transition ${
+    filter === "Pending"
+      ? "bg-orange-500 text-white"
+      : "border border-orange-500/30 text-orange-400 hover:bg-orange-500 hover:text-white"
+  }`}
+>
+  Pending
+</button>
 
-      <button className="rounded-full border border-emerald-500/30 px-5 py-2 text-emerald-400">
-        Resolved
-      </button>
+      <button
+  onClick={() => setFilter("Resolved")}
+  className={`rounded-full px-5 py-2 font-medium transition ${
+    filter === "Resolved"
+      ? "bg-emerald-500 text-white"
+      : "border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white"
+  }`}
+>
+  Resolved
+</button>
 
-      <button className="rounded-full border border-red-500/30 px-5 py-2 text-red-400">
-        Critical
-      </button>
-
+      <button
+  onClick={() => setFilter("Critical")}
+  className={`rounded-full px-5 py-2 font-medium transition ${
+    filter === "Critical"
+      ? "bg-red-500 text-white"
+      : "border border-red-500/30 text-red-400 hover:bg-red-500 hover:text-white"
+  }`}
+>
+  Critical
+</button>
     </div>
 
   </div>
@@ -110,13 +221,14 @@ const resolvedComplaints = complaints.filter(
         <th className="px-6 py-4">Ward</th>
         <th className="px-6 py-4">Priority</th>
         <th className="px-6 py-4">Status</th>
+        <th className="px-6 py-4">Actions</th>
 
       </tr>
 
     </thead>
 
     <tbody>
-  {complaints.map((complaint: any) => (
+  {filteredComplaints.map((complaint: any) => (
     <tr
       key={complaint._id}
       className="border-b border-slate-800 hover:bg-slate-800/30 transition"
@@ -140,6 +252,33 @@ const resolvedComplaints = complaints.filter(
       <td className="px-6 py-5">
         {complaint.status}
       </td>
+      <td className="px-6 py-5 flex gap-2">
+
+  <button
+  onClick={() => {
+    const status = prompt(
+      "Enter status: Pending, In Progress, Resolved",
+      complaint.status
+    );
+
+    if (!status) return;
+
+    setEditingId(complaint._id);
+    setEditingStatus(status);
+  }}
+  className="rounded-lg bg-blue-500 px-3 py-2 text-white hover:bg-blue-600"
+>
+  Edit
+</button>
+
+  <button
+    onClick={() => handleDelete(complaint._id)}
+    className="rounded-lg bg-red-500 px-3 py-2 text-white hover:bg-red-600"
+  >
+    Delete
+  </button>
+
+</td>
     </tr>
   ))}
 </tbody>
