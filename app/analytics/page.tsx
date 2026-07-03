@@ -1,24 +1,74 @@
 "use client";
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { getComplaints } from "@/services/complaintService";
+import { getAnalytics } from "@/services/analyticsService";
 import {
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-const data = [
-  { day: "Mon", complaints: 42 },
-  { day: "Tue", complaints: 65 },
-  { day: "Wed", complaints: 91 },
-  { day: "Thu", complaints: 58 },
-  { day: "Fri", complaints: 104 },
-  { day: "Sat", complaints: 73 },
-  { day: "Sun", complaints: 118 },
-];
 export default function AnalyticsPage() {
+  const [complaints, setComplaints] = useState<any[]>([]);
+const [analytics, setAnalytics] = useState({
+  categoryStats: [],
+  statusStats: [],
+  priorityStats: [],
+});
+useEffect(() => {
+  const fetchComplaints = async () => {
+    try {
+      const data = await getComplaints();
+      setComplaints(data);
+      const analyticsData = await getAnalytics();
+    setAnalytics(analyticsData);
+    console.log(analyticsData);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  fetchComplaints();
+}, []);
+const chartData = [
+  {
+    day: "Complaints",
+    complaints: complaints.length,
+  },
+];
+const COLORS = [
+  "#22d3ee",
+  "#10b981",
+  "#f97316",
+  "#a855f7",
+  "#ef4444",
+];
+
+const categoryData = analytics.categoryStats.map((item: any) => ({
+  name: item._id,
+  value: item.count,
+}));
+const statusData = analytics.statusStats.map((item: any) => ({
+  status:
+    item._id?.toLowerCase() === "resolved"
+      ? "Resolved"
+      : item._id,
+  complaints: item.count,
+}));
+const priorityData = analytics.priorityStats
+  .filter((item: any) => item._id)
+  .map((item: any) => ({
+    name: item._id,
+    value: item.count,
+  }));
   return (
     <main className="min-h-screen bg-[#020617] text-white">
       <div className="mx-auto max-w-7xl px-8 py-10">
@@ -89,7 +139,7 @@ export default function AnalyticsPage() {
 
   <ResponsiveContainer width="100%" height="100%">
 
-    <BarChart data={data}>
+    <BarChart data={statusData}>
 <CartesianGrid
   stroke="#1e293b"
   strokeDasharray="4 4"
@@ -102,9 +152,9 @@ export default function AnalyticsPage() {
   tickLine={false}
 />
       <XAxis
-        dataKey="day"
-        stroke="#94a3b8"
-      />
+  dataKey="status"
+  stroke="#94a3b8"
+/>
 
       <Tooltip
         contentStyle={{
@@ -136,6 +186,78 @@ export default function AnalyticsPage() {
   </ResponsiveContainer>
 
 </div>
+</motion.section>
+<motion.section
+  initial={{ opacity: 0, y: 40 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="mt-10 rounded-3xl border border-slate-800 bg-slate-900/60 p-8"
+>
+  <h2 className="mb-8 text-3xl font-bold">
+    Complaints by Category
+  </h2>
+
+  <div className="h-96">
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+  data={categoryData}
+  dataKey="value"
+  nameKey="name"
+  cx="50%"
+  cy="50%"
+  outerRadius={140}
+  label={({ name, value }) => `${name} (${value})`}
+>
+          {categoryData.map((_: any, index: number) => (
+            <Cell
+              key={index}
+              fill={COLORS[index % COLORS.length]}
+            />
+          ))}
+        </Pie>
+
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
+</motion.section>
+<motion.section
+  initial={{ opacity: 0, y: 40 }}
+  whileInView={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.8 }}
+  className="mt-10 rounded-3xl border border-slate-800 bg-slate-900/60 p-8"
+>
+  <h2 className="mb-8 text-3xl font-bold">
+    Complaints by Priority
+  </h2>
+
+  <div className="h-96">
+    <ResponsiveContainer width="100%" height="100%">
+      <PieChart>
+        <Pie
+          data={priorityData}
+          dataKey="value"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          outerRadius={140}
+          label={({ name, value }) => `${name} (${value})`}
+        >
+          {priorityData.map((_: any, index: number) => (
+            <Cell
+              key={index}
+              fill={COLORS[index % COLORS.length]}
+            />
+          ))}
+        </Pie>
+
+        <Tooltip />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
+  </div>
 </motion.section>
 {/* AI Performance Panel Start */}
 

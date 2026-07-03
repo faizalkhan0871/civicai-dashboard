@@ -8,13 +8,17 @@ const {
   updateComplaint,
   deleteComplaint,
   getDashboardStats,
+  getAnalytics,
+  getRecentActivity,
 } = require("../controllers/complaintController");
-
 const router = express.Router();
 
 // Dashboard Stats
 router.get("/stats", protect, getDashboardStats);
 
+// Analytics
+router.get("/analytics", protect, getAnalytics);
+router.get("/activity", protect, getRecentActivity);
 // Get All Complaints
 router.get("/", protect, getComplaints);
 

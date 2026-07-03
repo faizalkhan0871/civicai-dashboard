@@ -9,6 +9,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDashboardStats } from "@/services/dashboardService";
 import { getComplaints } from "@/services/complaintService";
+import { getRecentActivity } from "@/services/activityService";
+import ComplaintModal from "@/components/ComplaintModal";
 
 import { motion } from "framer-motion"
 import {
@@ -34,6 +36,8 @@ export default function Home() {
   resolved: 0,
   critical: 0,
 });
+const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+const [activities, setActivities] = useState<any[]>([]);
 const exportCSV = async () => {
   try {
     const complaints = await getComplaints();
@@ -178,6 +182,8 @@ useEffect(() => {
     try {
       const data = await getDashboardStats();
       setStats(data);
+      const recentActivity = await getRecentActivity();
+setActivities(recentActivity);
     } catch (error) {
       console.error("Failed to load dashboard stats:", error);
     }
@@ -475,127 +481,61 @@ useEffect(() => {
 
   <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
 
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: 0.3 }}
-      className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 transition-all duration-500 hover:-translate-y-3 hover:border-slate-700 hover:shadow-[0_25px_80px_rgba(0,0,0,0.45)]"
-    >
-      <div className="h-52 overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1200"
-          alt="Road Damage"
-          className="h-full w-full object-cover transition duration-700 hover:scale-110"
-        />
-      </div>
+    {activities.map((activity: any, index: number) => (
+  <motion.div
+    key={activity._id}
+    initial={{ opacity: 0, y: 30 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5, delay: index * 0.1 }}
+    onClick={() => setSelectedComplaint(activity)}
+    className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:border-cyan-400 hover:shadow-[0_0_35px_rgba(34,211,238,0.15)]"
+  >
+    
+    <div className="flex items-center justify-between">
 
-      <div className="p-5">
-        <span className="rounded-full bg-orange-500/20 px-3 py-1 text-xs font-semibold text-orange-300">
-          High Priority
-        </span>
+      <span
+        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          activity.priority === "High"
+            ? "bg-red-500/20 text-red-400"
+            : activity.priority === "Medium"
+            ? "bg-orange-500/20 text-orange-400"
+            : "bg-emerald-500/20 text-emerald-400"
+        }`}
+      >
+        {activity.priority || "Normal"}
+      </span>
 
-        <h3 className="mt-4 text-xl font-semibold text-white">
-          Road Damage Reported
-        </h3>
+      <span className="text-xs text-slate-500">
+        {new Date(activity.createdAt).toLocaleDateString()}
+      </span>
 
-        <p className="mt-2 text-sm text-slate-400">
-          Ward 5 • Reported 1 hour ago
-        </p>
-      </div>
-    </motion.div>
+    </div>
 
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, delay: 0.5 }}
-      className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 transition-all duration-500 hover:-translate-y-3 hover:border-slate-700 hover:shadow-[0_25px_80px_rgba(0,0,0,0.45)]"
-    >
-      <div className="h-52 overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=1200"
-          alt="Water Logging"
-          className="h-full w-full object-cover transition duration-700 hover:scale-110"
-        />
-      </div>
-
-      <div className="p-5">
-        <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-300">
-          Critical
-        </span>
-
-        <h3 className="mt-4 text-xl font-semibold text-white">
-          Water Logging Near Market
-        </h3>
-
-        <p className="mt-2 text-sm text-slate-400">
-          Ward 11 • Reported 15 mins ago
-        </p>
-      </div>
-    </motion.div>
-    <motion.div
-  initial={{ opacity: 0, y: 40 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.7, delay: 0.7 }}
-  className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 transition-all duration-500 hover:-translate-y-3 hover:border-slate-700 hover:shadow-[0_25px_80px_rgba(0,0,0,0.45)]"
->
-
-  <div className="h-52 overflow-hidden">
-    <img
-      src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-      alt="Garbage Collection"
-      className="h-full w-full object-cover transition duration-700 hover:scale-110"
-    />
-  </div>
-
-  <div className="p-5">
-
-    <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-semibold text-emerald-300">
-      Normal
-    </span>
-
-    <h3 className="mt-4 text-xl font-semibold text-white">
-      Garbage Collection Pending
+    <h3 className="mt-5 text-xl font-bold text-white">
+      {activity.title}
     </h3>
 
-    <p className="mt-2 text-sm text-slate-400">
-      Ward 8 • Reported 40 mins ago
-    </p>
+    <div className="mt-4 flex items-center justify-between">
 
-  </div>
+      <span
+        className={`rounded-full px-3 py-1 text-xs ${
+          activity.status === "Resolved"
+            ? "bg-emerald-500/20 text-emerald-400"
+            : activity.status === "Pending"
+            ? "bg-yellow-500/20 text-yellow-400"
+            : "bg-cyan-500/20 text-cyan-400"
+        }`}
+      >
+        {activity.status}
+      </span>
 
-</motion.div>
-<motion.div
-  initial={{ opacity: 0, y: 40 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.7, delay: 0.7 }}
-  className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900/60 transition-all duration-500 hover:-translate-y-3 hover:border-slate-700 hover:shadow-[0_25px_80px_rgba(0,0,0,0.45)]"
->
+      <span className="text-sm text-slate-400">
+        Civic Complaint
+      </span>
 
-  <div className="h-52 overflow-hidden">
-    <img
-      src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200"
-      alt="Smart City"
-      className="h-full w-full object-cover transition duration-700 hover:scale-110"
-    />
-  </div>
-
-  <div className="p-5">
-
-    <span className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs font-semibold text-cyan-300">
-      Medium Priority
-    </span>
-
-    <h3 className="mt-4 text-xl font-semibold text-white">
-      Smart City Infrastructure Inspection
-    </h3>
-
-    <p className="mt-2 text-sm text-slate-400">
-      Ward 8 • Reported 35 mins ago
-    </p>
-
-  </div>
-
-</motion.div>
+    </div>
+  </motion.div>
+))}
 
   </div>
 </section>
@@ -775,7 +715,12 @@ useEffect(() => {
 
       </div>
       </div>
-      
+      {selectedComplaint && (
+  <ComplaintModal
+    complaint={selectedComplaint}
+    onClose={() => setSelectedComplaint(null)}
+  />
+)}
     </main>
   )
 }

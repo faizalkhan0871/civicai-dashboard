@@ -112,10 +112,71 @@ const critical = await Complaint.countDocuments({
     });
   }
 };
+// Analytics Data
+const getAnalytics = async (req, res) => {
+  try {
+    const categoryStats = await Complaint.aggregate([
+      {
+        $group: {
+          _id: "$category",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const statusStats = await Complaint.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const priorityStats = await Complaint.aggregate([
+      {
+        $group: {
+          _id: "$priority",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      categoryStats,
+      statusStats,
+      priorityStats,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+// Live Activity
+const getRecentActivity = async (req, res) => {
+  try {
+    const activities = await Complaint.find()
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select(
+  "title description category location status priority createdAt"
+);
+
+    res.status(200).json(activities);
+
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   createComplaint,
   getComplaints,
   updateComplaint,
   deleteComplaint,
   getDashboardStats,
+  getAnalytics,
+  getRecentActivity,
 };
