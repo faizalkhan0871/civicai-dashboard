@@ -15,7 +15,10 @@ import {
   analyzeComplaintsWithAI,
   AIAnalysisResponse,
 } from "@/services/aiService";
-
+import {
+  sendChatMessage,
+  ChatHistoryItem,
+} from "@/services/chatService";
 import { motion } from "framer-motion"
 import {
   Activity,
@@ -30,7 +33,11 @@ import {
   Sparkles,
   Settings
 } from "lucide-react"
-
+type CopilotMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+};
 export default function Home() {
     const router = useRouter();
   const [stats, setStats] = useState({
@@ -69,6 +76,25 @@ const [aiError, setAiError] =
   useState("");
   const [analysisGeneratedAt, setAnalysisGeneratedAt] =
   useState<Date | null>(null);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
+
+const [copilotInput, setCopilotInput] = useState("");
+
+const [isCopilotTyping, setIsCopilotTyping] =
+  useState(false);
+
+const [copilotError, setCopilotError] =
+  useState("");
+
+const [copilotMessages, setCopilotMessages] =
+  useState<CopilotMessage[]>([
+    {
+      id: "welcome-message",
+      role: "assistant",
+      content:
+        "Hello! I am CivicAI Copilot. Ask me about complaints, priorities, risks, pending issues, or civic operations in any language.",
+    },
+  ]);
 const activeComplaints = stats.pending + stats.inProgress;
 
 const resolutionRate =
@@ -255,6 +281,74 @@ setIsAnalysisOpen(true);
     setIsAnalyzing(false);
   }
 };
+const handleSendCopilotMessage = async (
+  customMessage?: string
+) => {
+  const messageToSend = (
+    customMessage ?? copilotInput
+  ).trim();
+
+  if (!messageToSend || isCopilotTyping) {
+    return;
+  }
+
+  const userMessage: CopilotMessage = {
+    id: `user-${Date.now()}`,
+    role: "user",
+    content: messageToSend,
+  };
+
+  const previousMessages = copilotMessages;
+
+  setCopilotMessages((prev) => [
+    ...prev,
+    userMessage,
+  ]);
+
+  setCopilotInput("");
+  setCopilotError("");
+  setIsCopilotTyping(true);
+
+  try {
+    const history: ChatHistoryItem[] =
+      previousMessages
+        .filter(
+          (message) =>
+            message.id !== "welcome-message"
+        )
+        .map((message) => ({
+          role: message.role,
+          content: message.content,
+        }));
+
+    const result = await sendChatMessage(
+      messageToSend,
+      history
+    );
+
+    const assistantMessage: CopilotMessage = {
+      id: `assistant-${Date.now()}`,
+      role: "assistant",
+      content: result.reply,
+    };
+
+    setCopilotMessages((prev) => [
+      ...prev,
+      assistantMessage,
+    ]);
+  } catch (error) {
+    console.error(
+      "CivicAI Copilot Error:",
+      error
+    );
+
+    setCopilotError(
+      "CivicAI Copilot could not respond. Please try again."
+    );
+  } finally {
+    setIsCopilotTyping(false);
+  }
+};
 useEffect(() => {
   const fetchStats = async () => {
     try {
@@ -430,8 +524,9 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
 useEffect(() => {
   const handleEscapeKey = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
-      setIsAnalysisOpen(false);
-    }
+  setIsAnalysisOpen(false);
+  setIsCopilotOpen(false);
+}
   };
 
   window.addEventListener("keydown", handleEscapeKey);
@@ -1290,6 +1385,213 @@ useEffect(() => {
       }));
     }}
   />
+)}
+{/* CivicAI Copilot */}
+<div className="fixed bottom-6 right-6 z-[120]">
+  {!isCopilotOpen && (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      whileHover={{ scale: 1.05, y: -3 }}
+      whileTap={{ scale: 0.96 }}
+      onClick={() => setIsCopilotOpen(true)}
+      className="group flex items-center gap-3 rounded-2xl border border-cyan-400/30 bg-slate-950/95 px-5 py-4 text-white shadow-[0_0_45px_rgba(34,211,238,0.22)] backdrop-blur-xl transition hover:border-cyan-400/70"
+    >
+      <span className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-400 to-blue-600 text-xl shadow-[0_0_25px_rgba(34,211,238,0.35)]">
+        ✨
+
+        <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-400" />
+      </span>
+
+      <span className="text-left">
+        <span className="block text-sm font-bold">
+          Ask CivicAI
+        </span>
+
+        <span className="block text-xs text-slate-400">
+          Multilingual AI Copilot
+        </span>
+      </span>
+    </motion.button>
+  )}
+</div>
+
+{isCopilotOpen && (
+  <>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      onClick={() => setIsCopilotOpen(false)}
+      className="fixed inset-0 z-[121] bg-black/20 backdrop-blur-[2px] md:hidden"
+    />
+
+    <motion.aside
+      initial={{ opacity: 0, x: 80, scale: 0.96 }}
+      animate={{ opacity: 1, x: 0, scale: 1 }}
+      transition={{ duration: 0.25 }}
+      className="fixed bottom-4 right-4 top-4 z-[122] flex w-[calc(100%-2rem)] flex-col overflow-hidden rounded-3xl border border-cyan-500/20 bg-slate-950/95 shadow-[0_0_80px_rgba(34,211,238,0.18)] backdrop-blur-2xl sm:w-[430px]"
+    >
+      {/* Copilot Header */}
+      <div className="border-b border-slate-800 bg-gradient-to-r from-cyan-500/10 via-slate-950 to-blue-500/10 p-5">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-600 text-xl shadow-[0_0_25px_rgba(34,211,238,0.25)]">
+              ✨
+
+              <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-slate-950 bg-emerald-400" />
+            </div>
+
+            <div>
+              <h3 className="font-bold text-white">
+                CivicAI Copilot
+              </h3>
+
+              <div className="mt-1 flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+
+                <span className="text-xs text-slate-400">
+                  Online · Multilingual
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsCopilotOpen(false)}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-red-400 hover:bg-red-500/10 hover:text-red-400"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 space-y-4 overflow-y-auto p-5">
+        {copilotMessages.map((message) => (
+          <div
+            key={message.id}
+            className={`flex ${
+              message.role === "user"
+                ? "justify-end"
+                : "justify-start"
+            }`}
+          >
+            <div
+              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
+                message.role === "user"
+                  ? "rounded-br-md bg-cyan-500 text-slate-950"
+                  : "rounded-bl-md border border-slate-800 bg-slate-900 text-slate-200"
+              }`}
+            >
+              {message.content}
+            </div>
+          </div>
+        ))}
+
+        {isCopilotTyping && (
+          <div className="flex justify-start">
+            <div className="rounded-2xl rounded-bl-md border border-slate-800 bg-slate-900 px-4 py-4">
+              <div className="flex items-center gap-2">
+                {[0, 1, 2].map((dot) => (
+                  <motion.span
+                    key={dot}
+                    animate={{
+                      y: [0, -5, 0],
+                      opacity: [0.4, 1, 0.4],
+                    }}
+                    transition={{
+                      duration: 0.8,
+                      repeat: Infinity,
+                      delay: dot * 0.15,
+                    }}
+                    className="h-2 w-2 rounded-full bg-cyan-400"
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {copilotError && (
+          <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-4">
+            <p className="text-sm text-red-300">
+              {copilotError}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Suggested Prompts */}
+      {copilotMessages.length === 1 && (
+        <div className="border-t border-slate-800 px-5 py-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Suggested Questions
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {[
+              "How many complaints are pending?",
+              "Sabse urgent issue konsa hai?",
+              "आज की शिकायतों का सारांश बताओ",
+            ].map((prompt) => (
+              <button
+                key={prompt}
+                onClick={() =>
+                  handleSendCopilotMessage(prompt)
+                }
+                disabled={isCopilotTyping}
+                className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-left text-xs text-slate-300 transition hover:border-cyan-400 hover:text-cyan-300 disabled:opacity-50"
+              >
+                {prompt}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Input */}
+      <div className="border-t border-slate-800 bg-slate-950/90 p-4">
+        <div className="flex items-end gap-3 rounded-2xl border border-slate-700 bg-slate-900 p-2 transition focus-within:border-cyan-400/70">
+          <textarea
+            value={copilotInput}
+            onChange={(e) =>
+              setCopilotInput(e.target.value)
+            }
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" &&
+                !e.shiftKey
+              ) {
+                e.preventDefault();
+                handleSendCopilotMessage();
+              }
+            }}
+            placeholder="Ask in English, Hindi or Hinglish..."
+            rows={1}
+            disabled={isCopilotTyping}
+            className="max-h-28 min-h-[44px] flex-1 resize-none bg-transparent px-3 py-3 text-sm text-white outline-none placeholder:text-slate-500 disabled:opacity-60"
+          />
+
+          <button
+            onClick={() =>
+              handleSendCopilotMessage()
+            }
+            disabled={
+              !copilotInput.trim() ||
+              isCopilotTyping
+            }
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500 font-bold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            ➤
+          </button>
+        </div>
+
+        <p className="mt-2 text-center text-[11px] text-slate-600">
+          Enter to send · Shift + Enter for new line
+        </p>
+      </div>
+    </motion.aside>
+  </>
 )}
     </main>
   )
