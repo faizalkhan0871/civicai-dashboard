@@ -1,6 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import {
+  updateComplaint,
+  deleteComplaint,
+} from "@/services/complaintService";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -15,14 +19,73 @@ import {
 interface ComplaintModalProps {
   complaint: any;
   onClose: () => void;
+  onUpdated: (updatedComplaint: any) => void;
+  onDeleted: (deletedId: string) => void;
 }
-
 export default function ComplaintModal({
   complaint,
   onClose,
+  onUpdated,
+  onDeleted,
 }: ComplaintModalProps) {
   const [isImageOpen, setIsImageOpen] = useState(false);
+const [isEditing, setIsEditing] = useState(false);
 
+const [editData, setEditData] = useState({
+  title: complaint.title || "",
+  description: complaint.description || "",
+  category: complaint.category || "Road Damage",
+  priority: complaint.priority || "Medium",
+  location: complaint.location || "",
+  status: complaint.status || "Pending",
+});
+
+const [isSaving, setIsSaving] = useState(false);
+const [isDeleting, setIsDeleting] = useState(false);
+const handleSaveEdit = async () => {
+  try {
+    setIsSaving(true);
+
+    const updatedComplaint = await updateComplaint(
+  complaint._id,
+  editData
+);
+
+onUpdated(updatedComplaint);
+
+setIsEditing(false);
+
+alert("Complaint Updated Successfully ✅");  } catch (error) {
+    console.error(error);
+    alert("Failed to update complaint");
+  } finally {
+    setIsSaving(false);
+  }
+};
+const handleDeleteComplaint = async () => {
+  const confirmed = window.confirm(
+    `Are you sure you want to delete "${complaint.title}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setIsDeleting(true);
+
+    await deleteComplaint(complaint._id);
+
+onDeleted(complaint._id);
+
+alert("Complaint Deleted Successfully ✅");
+
+onClose();
+  } catch (error) {
+    console.error(error);
+    alert("Failed to delete complaint");
+  } finally {
+    setIsDeleting(false);
+  }
+};
   if (!complaint) return null;
 
   return (
@@ -67,7 +130,135 @@ export default function ComplaintModal({
             </button>
 
           </div>
+{isEditing && (
+  <div className="border-b border-slate-800 bg-slate-950/50 p-6">
+    <div className="mb-6 flex items-center justify-between">
+      <div>
+        <h3 className="text-2xl font-bold text-white">
+          Edit Complaint
+        </h3>
+        <p className="mt-1 text-sm text-slate-400">
+          Update complaint information
+        </p>
+      </div>
 
+      <button
+        type="button"
+        onClick={() => setIsEditing(false)}
+        className="rounded-xl bg-slate-800 p-2 text-slate-300 transition hover:bg-red-500 hover:text-white"
+      >
+        <X className="h-5 w-5" />
+      </button>
+    </div>
+
+    <div className="grid gap-4 md:grid-cols-2">
+      <input
+        type="text"
+        value={editData.title}
+        onChange={(e) =>
+          setEditData({
+            ...editData,
+            title: e.target.value,
+          })
+        }
+        placeholder="Complaint title"
+        className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400"
+      />
+
+      <input
+        type="text"
+        value={editData.location}
+        onChange={(e) =>
+          setEditData({
+            ...editData,
+            location: e.target.value,
+          })
+        }
+        placeholder="Location"
+        className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400"
+      />
+
+      <select
+        value={editData.category}
+        onChange={(e) =>
+          setEditData({
+            ...editData,
+            category: e.target.value,
+          })
+        }
+        className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400"
+      >
+        <option value="Road Damage">Road Damage</option>
+        <option value="Water Leakage">Water Leakage</option>
+        <option value="Garbage">Garbage</option>
+        <option value="Street Light">Street Light</option>
+        <option value="Other">Other</option>
+      </select>
+
+      <select
+        value={editData.priority}
+        onChange={(e) =>
+          setEditData({
+            ...editData,
+            priority: e.target.value,
+          })
+        }
+        className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400"
+      >
+        <option value="Low">Low</option>
+        <option value="Medium">Medium</option>
+        <option value="High">High</option>
+      </select>
+
+      <select
+        value={editData.status}
+        onChange={(e) =>
+          setEditData({
+            ...editData,
+            status: e.target.value,
+          })
+        }
+        className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400 md:col-span-2"
+      >
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+      </select>
+
+      <textarea
+        rows={4}
+        value={editData.description}
+        onChange={(e) =>
+          setEditData({
+            ...editData,
+            description: e.target.value,
+          })
+        }
+        placeholder="Description"
+        className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-white outline-none focus:border-cyan-400 md:col-span-2"
+      />
+    </div>
+
+    <div className="mt-6 flex justify-end gap-3">
+      <button
+        type="button"
+        onClick={() => setIsEditing(false)}
+        className="rounded-xl border border-slate-600 px-5 py-2 font-semibold text-slate-300 transition hover:bg-slate-800"
+      >
+        Cancel
+      </button>
+
+      <button
+        type="button"
+        onClick={handleSaveEdit}
+        disabled={isSaving}
+        className="rounded-xl bg-cyan-500 px-6 py-2 font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isSaving ? "Saving..." : "Save Changes"}
+      </button>
+    </div>
+  </div>
+)}
           {/* Body */}
 
           <div className="grid gap-6 p-6 md:grid-cols-2">
@@ -186,16 +377,19 @@ export default function ComplaintModal({
   <div className="flex gap-3">
 
     <button
-      className="rounded-xl border border-cyan-500 px-5 py-2 font-semibold text-cyan-400 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
-    >
-      ✏️ Edit
-    </button>
+  onClick={() => setIsEditing(true)}
+  className="rounded-xl border border-cyan-500 px-5 py-2 font-semibold text-cyan-400 transition-all duration-300 hover:bg-cyan-500 hover:text-black"
+>
+  ✏️ Edit
+</button>
 
     <button
-      className="rounded-xl border border-red-500 px-5 py-2 font-semibold text-red-400 transition-all duration-300 hover:bg-red-500 hover:text-white"
-    >
-      🗑 Delete
-    </button>
+  onClick={handleDeleteComplaint}
+  disabled={isDeleting}
+  className="rounded-xl border border-red-500 px-5 py-2 font-semibold text-red-400 transition-all duration-300 hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {isDeleting ? "Deleting..." : "🗑 Delete"}
+</button>
 
     <button
       onClick={onClose}

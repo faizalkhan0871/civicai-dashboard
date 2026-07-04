@@ -37,7 +37,52 @@ export default function Home() {
   critical: 0,
 });
 const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
+const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
 const [activities, setActivities] = useState<any[]>([]);
+const [weeklyGrowth, setWeeklyGrowth] = useState(0);
+const [resolvedGrowth, setResolvedGrowth] = useState(0);
+const [recommendation, setRecommendation] = useState({
+  title: "System Monitoring Active",
+  message: "No urgent recommendation available yet.",
+  level: "Low",
+});
+const [weeklyData, setWeeklyData] = useState([
+  { day: "Mon", count: 0 },
+  { day: "Tue", count: 0 },
+  { day: "Wed", count: 0 },
+  { day: "Thu", count: 0 },
+  { day: "Fri", count: 0 },
+  { day: "Sat", count: 0 },
+  { day: "Sun", count: 0 },
+]);
+const activeComplaints = stats.pending + stats.inProgress;
+
+const resolutionRate =
+  stats.total > 0
+    ? Math.round((stats.resolved / stats.total) * 100)
+    : 0;
+
+const criticalRate =
+  stats.total > 0
+    ? Math.round((stats.critical / stats.total) * 100)
+    : 0;
+    const projectedComplaints =
+  stats.total > 0
+    ? Math.ceil(stats.total * 1.08)
+    : 0;
+    const pendingRate =
+  stats.total > 0
+    ? Math.round((stats.pending / stats.total) * 100)
+    : 0;
+
+const systemHealth =
+  stats.total > 0
+    ? Math.max(0, 100 - pendingRate)
+    : 100;
+    const maxWeeklyCount = Math.max(
+  ...weeklyData.map((item) => item.count),
+  1
+);
 const exportCSV = async () => {
   try {
     const complaints = await getComplaints();
@@ -183,7 +228,165 @@ useEffect(() => {
       const data = await getDashboardStats();
       setStats(data);
       const complaints = await getComplaints();
+
 setActivities(complaints.slice(0, 6));
+
+const dayCounts = [
+  { day: "Mon", count: 0 },
+  { day: "Tue", count: 0 },
+  { day: "Wed", count: 0 },
+  { day: "Thu", count: 0 },
+  { day: "Fri", count: 0 },
+  { day: "Sat", count: 0 },
+  { day: "Sun", count: 0 },
+];
+
+const now = new Date();
+
+const currentDay = now.getDay();
+
+const daysSinceMonday =
+  currentDay === 0 ? 6 : currentDay - 1;
+
+const startOfWeek = new Date(now);
+
+startOfWeek.setDate(
+  now.getDate() - daysSinceMonday
+);
+
+startOfWeek.setHours(0, 0, 0, 0);
+
+const endOfWeek = new Date(startOfWeek);
+
+endOfWeek.setDate(
+  startOfWeek.getDate() + 7
+);
+const startOfPreviousWeek = new Date(startOfWeek);
+
+startOfPreviousWeek.setDate(
+  startOfWeek.getDate() - 7
+);
+
+const endOfPreviousWeek = new Date(startOfWeek);
+
+const currentWeekComplaints = complaints.filter(
+  (complaint: any) => {
+    const date = new Date(complaint.createdAt);
+
+    return (
+      date >= startOfWeek &&
+      date < endOfWeek
+    );
+  }
+);
+
+const previousWeekComplaints = complaints.filter(
+  (complaint: any) => {
+    const date = new Date(complaint.createdAt);
+
+    return (
+      date >= startOfPreviousWeek &&
+      date < endOfPreviousWeek
+    );
+  }
+);
+
+const currentWeekResolved =
+  currentWeekComplaints.filter(
+    (complaint: any) =>
+      complaint.status === "Resolved"
+  ).length;
+
+const previousWeekResolved =
+  previousWeekComplaints.filter(
+    (complaint: any) =>
+      complaint.status === "Resolved"
+  ).length;
+
+const calculateGrowth = (
+  current: number,
+  previous: number
+) => {
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
+
+  return Math.round(
+    ((current - previous) / previous) * 100
+  );
+};
+
+setWeeklyGrowth(
+  calculateGrowth(
+    currentWeekComplaints.length,
+    previousWeekComplaints.length
+  )
+);
+
+setResolvedGrowth(
+  calculateGrowth(
+    currentWeekResolved,
+    previousWeekResolved
+  )
+);
+complaints.forEach((complaint: any) => {
+  const date = new Date(complaint.createdAt);
+
+  if (
+    date >= startOfWeek &&
+    date < endOfWeek
+  ) {
+    const jsDay = date.getDay();
+
+    const mondayIndex =
+      jsDay === 0 ? 6 : jsDay - 1;
+
+    dayCounts[mondayIndex].count += 1;
+  }
+});
+
+setWeeklyData(dayCounts);
+const activeItems = complaints.filter(
+  (complaint: any) =>
+    complaint.status !== "Resolved"
+);
+
+const highPriorityItems = activeItems.filter(
+  (complaint: any) =>
+    complaint.priority === "High"
+);
+
+const categoryCounts: Record<string, number> = {};
+
+highPriorityItems.forEach((complaint: any) => {
+  const category = complaint.category || "Other";
+
+  categoryCounts[category] =
+    (categoryCounts[category] || 0) + 1;
+});
+
+const topRiskCategory = Object.entries(categoryCounts)
+  .sort((a, b) => b[1] - a[1])[0];
+
+if (highPriorityItems.length >= 3 && topRiskCategory) {
+  setRecommendation({
+    title: "Immediate Priority Dispatch Suggested",
+    message: `${topRiskCategory[0]} currently has ${topRiskCategory[1]} high-priority active complaint(s). Immediate field-team review is recommended.`,
+    level: "High",
+  });
+} else if (activeItems.length >= 3) {
+  setRecommendation({
+    title: "Active Workload Requires Attention",
+    message: `${activeItems.length} complaints are currently active. Review pending and in-progress cases to reduce operational backlog.`,
+    level: "Medium",
+  });
+} else {
+  setRecommendation({
+    title: "Civic Operations Stable",
+    message: `Current active workload is ${activeItems.length} complaint(s). No major escalation pattern is detected from the available complaint data.`,
+    level: "Low",
+  });
+}
     } catch (error) {
       console.error("Failed to load dashboard stats:", error);
     }
@@ -300,7 +503,7 @@ setActivities(complaints.slice(0, 6));
     </p>
 
     <h3 className="mt-2 text-2xl font-bold text-cyan-400">
-  <CountUp end={stats.total} duration={2} separator="," />
+  <CountUp end={activeComplaints} duration={2} separator="," />
 </h3>
 
   </div>
@@ -394,10 +597,12 @@ setActivities(complaints.slice(0, 6));
   📄 Export PDF
 </button>
 
-  <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-emerald-400">
-    🤖 AI Analysis
-  </button>
-
+  <button
+  onClick={() => setIsAnalysisOpen(true)}
+  className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-emerald-400"
+>
+  🤖 AI Analysis
+</button>
   <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-orange-400">
     ⚡ Live Monitor
   </button>
@@ -425,9 +630,18 @@ setActivities(complaints.slice(0, 6));
   <CountUp end={stats.total} duration={2} separator="," />
 </h2>
 
-    <p className="mt-2 text-sm text-green-400">
-      +8.4% this week
-    </p>
+    <p
+  className={`mt-2 text-sm ${
+    weeklyGrowth > 0
+      ? "text-green-400"
+      : weeklyGrowth < 0
+      ? "text-red-400"
+      : "text-slate-400"
+  }`}
+>
+  {weeklyGrowth > 0 ? "+" : ""}
+  {weeklyGrowth}% vs previous week
+</p>
   </motion.div>
 
   <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:border-slate-700 hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
@@ -443,9 +657,18 @@ setActivities(complaints.slice(0, 6));
   <CountUp end={stats.resolved} duration={2} />
 </h2>
 
-    <p className="mt-2 text-sm text-cyan-400">
-      +5.1% this week
-    </p>
+    <p
+  className={`mt-2 text-sm ${
+    resolvedGrowth > 0
+      ? "text-emerald-400"
+      : resolvedGrowth < 0
+      ? "text-red-400"
+      : "text-slate-400"
+  }`}
+>
+  {resolvedGrowth > 0 ? "+" : ""}
+  {resolvedGrowth}% vs previous week
+</p>
   </div>
 
   <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6 transition-all duration-300 hover:-translate-y-2 hover:border-slate-700 hover:shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
@@ -553,38 +776,69 @@ setActivities(complaints.slice(0, 6));
   </h2>
 </div>
 
-  <div className="rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6 backdrop-blur-xl shadow-[0_0_40px_rgba(6,182,212,0.08)]">
-    <div className="grid gap-6 md:grid-cols-3">
-      <div>
-        <div className="flex items-center gap-2 text-slate-400">
-  <Brain size={18} className="text-cyan-400" />
-  <p>AI Confidence</p>
-</div>
-        <h3 className="mt-2 text-5xl font-black tracking-tight text-cyan-400">
-  94%
-</h3>
+    <div className="mt-6 grid gap-6 md:grid-cols-3">
+
+    {/* System Health */}
+    <motion.div
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.25 }}
+      className="group rounded-3xl border border-cyan-500/20 bg-slate-900/60 p-6
+                 transition-all duration-300
+                 hover:border-cyan-400/70
+                 hover:shadow-[0_0_35px_rgba(34,211,238,0.18)]"
+    >
+      <div className="flex items-center gap-2 text-slate-400 group-hover:text-cyan-300">
+        <Brain size={18} className="text-cyan-400" />
+        <p>System Health</p>
       </div>
 
-      <div>
-        <div className="flex items-center gap-2 text-slate-400">
-  <Clock3 size={18} className="text-emerald-400" />
-  <p>Response Time</p>
-</div>
-        <h3 className="mt-2 text-5xl font-black tracking-tight text-emerald-400">
-  2.4 hrs
-</h3>
+      <h3 className="mt-3 text-5xl font-black tracking-tight text-cyan-400">
+        <CountUp end={systemHealth} duration={2} />%
+      </h3>
+    </motion.div>
+
+    {/* Active Complaints */}
+    <motion.div
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.25 }}
+      className="group rounded-3xl border border-emerald-500/20 bg-slate-900/60 p-6
+                 transition-all duration-300
+                 hover:border-emerald-400/70
+                 hover:shadow-[0_0_35px_rgba(52,211,153,0.18)]"
+    >
+      <div className="flex items-center gap-2 text-slate-400 group-hover:text-emerald-300">
+        <Clock3 size={18} className="text-emerald-400" />
+        <p>Active Complaints</p>
       </div>
 
-      <div>
-        <div className="flex items-center gap-2 text-slate-400">
-  <ShieldCheck size={18} className="text-orange-400" />
-  <p>Risk Level</p>
-</div>
-        <h3 className="mt-2 text-5xl font-black tracking-tight text-orange-400">
-  Medium
-</h3>
+      <h3 className="mt-3 text-5xl font-black tracking-tight text-emerald-400">
+        <CountUp end={activeComplaints} duration={2} />
+      </h3>
+    </motion.div>
+
+    {/* Risk Level */}
+    <motion.div
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.25 }}
+      className="group rounded-3xl border border-orange-500/20 bg-slate-900/60 p-6
+                 transition-all duration-300
+                 hover:border-orange-400/70
+                 hover:shadow-[0_0_35px_rgba(251,146,60,0.18)]"
+    >
+      <div className="flex items-center gap-2 text-slate-400 group-hover:text-orange-300">
+        <ShieldCheck size={18} className="text-orange-400" />
+        <p>Risk Level</p>
       </div>
-    </div>
+
+      <h3 className="mt-3 text-5xl font-black tracking-tight text-orange-400">
+        {criticalRate >= 50
+          ? "High"
+          : criticalRate >= 20
+          ? "Medium"
+          : "Low"}
+      </h3>
+    </motion.div>
+
   </div>
 </section>
 <section className="mt-12">
@@ -594,18 +848,17 @@ setActivities(complaints.slice(0, 6));
       <div className="h-3 w-3 rounded-full bg-emerald-400 animate-pulse" />
 
       <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400">
-        AI Recommendation
-      </p>
+  Smart Recommendation · {recommendation.level} Priority
+</p>
     </div>
 
     <h3 className="mt-4 text-2xl font-bold text-white">
-      Priority Dispatch Suggested
-    </h3>
+  {recommendation.title}
+</h3>
 
-    <p className="mt-3 max-w-3xl text-slate-300">
-      AI analysis indicates a high probability of escalation for water logging complaints in Ward 11.
-      Dispatching a field response team within the next 2 hours is recommended to prevent service disruption.
-    </p>
+<p className="mt-3 max-w-3xl text-slate-300">
+  {recommendation.message}
+</p>
 
   </div>
 </section>
@@ -616,50 +869,59 @@ setActivities(complaints.slice(0, 6));
     </p>
 
     <h2 className="mt-2 text-3xl font-bold text-white">
-      Complaint Trend Overview
-    </h2>
+  Current Week Complaint Trend
+</h2>
   </div>
 
   <div className="rounded-3xl border border-slate-800 bg-slate-900/60 p-6">
-    <div className="flex h-64 items-end justify-between gap-4">
+  <div className="flex h-64 items-end justify-between gap-4">
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-20 w-10 rounded-t-xl bg-cyan-500"></div>
-        <span className="text-xs text-slate-400">Mon</span>
-      </div>
+    {weeklyData.map((item, index) => {
+      const height =
+        item.count === 0
+          ? 8
+          : Math.max(
+              20,
+              (item.count / maxWeeklyCount) * 220
+            );
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-32 w-10 rounded-t-xl bg-cyan-500"></div>
-        <span className="text-xs text-slate-400">Tue</span>
-      </div>
+      return (
+        <motion.div
+          key={item.day}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{
+            duration: 0.4,
+            delay: index * 0.08,
+          }}
+          className="group flex flex-1 flex-col items-center gap-2"
+        >
+          <span className="text-sm font-semibold text-cyan-400">
+            {item.count}
+          </span>
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-44 w-10 rounded-t-xl bg-cyan-500"></div>
-        <span className="text-xs text-slate-400">Wed</span>
-      </div>
+          <motion.div
+            initial={{ height: 0 }}
+            animate={{ height }}
+            transition={{
+              duration: 0.8,
+              delay: index * 0.08,
+            }}
+            className="w-full max-w-12 rounded-t-xl bg-cyan-500
+                       transition-all duration-300
+                       group-hover:bg-cyan-400
+                       group-hover:shadow-[0_0_25px_rgba(34,211,238,0.45)]"
+          />
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-28 w-10 rounded-t-xl bg-cyan-500"></div>
-        <span className="text-xs text-slate-400">Thu</span>
-      </div>
+          <span className="text-xs text-slate-400">
+            {item.day}
+          </span>
+        </motion.div>
+      );
+    })}
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-56 w-10 rounded-t-xl bg-cyan-500"></div>
-        <span className="text-xs text-slate-400">Fri</span>
-      </div>
-
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-36 w-10 rounded-t-xl bg-cyan-500"></div>
-        <span className="text-xs text-slate-400">Sat</span>
-      </div>
-
-      <div className="flex flex-col items-center gap-2">
-        <div className="h-60 w-10 rounded-t-xl bg-cyan-500"></div>
-        <span className="text-xs text-slate-400">Sun</span>
-      </div>
-
-    </div>
   </div>
+</div>
 </section>
 <section className="mt-12 grid gap-6 md:grid-cols-3">
 
@@ -670,11 +932,11 @@ setActivities(complaints.slice(0, 6));
     </p>
 
     <h2 className="mt-4 text-5xl font-bold text-cyan-400">
-      142
-    </h2>
+  <CountUp end={projectedComplaints} duration={2} />
+</h2>
 
     <p className="mt-3 text-slate-400">
-      Expected complaints based on AI forecast
+      Projected volume using current complaint trend
     </p>
 
   </div>
@@ -686,11 +948,11 @@ setActivities(complaints.slice(0, 6));
     </p>
 
     <h2 className="mt-4 text-5xl font-bold text-emerald-400">
-      96%
-    </h2>
+  <CountUp end={resolutionRate} duration={2} />%
+</h2>
 
     <p className="mt-3 text-slate-400">
-      AI estimated success rate
+      Based on resolved complaints
     </p>
 
   </div>
@@ -702,11 +964,11 @@ setActivities(complaints.slice(0, 6));
     </p>
 
     <h2 className="mt-4 text-5xl font-bold text-orange-400">
-      08
-    </h2>
+  <CountUp end={stats.critical} duration={2} />
+</h2>
 
     <p className="mt-3 text-slate-400">
-      Require immediate monitoring
+      High-priority complaints requiring attention
     </p>
 
   </div>
@@ -715,10 +977,194 @@ setActivities(complaints.slice(0, 6));
 
       </div>
       </div>
-      {selectedComplaint && (
+      {isAnalysisOpen && (
+  <div
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+    onClick={() => setIsAnalysisOpen(false)}
+  >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92, y: 30 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      onClick={(e) => e.stopPropagation()}
+      className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-cyan-500/20 bg-slate-950 p-6 shadow-[0_0_60px_rgba(34,211,238,0.15)] md:p-8"
+    >
+      {/* Modal Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.25em] text-cyan-400">
+            Smart Analysis
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold text-white">
+            Civic Intelligence Report
+          </h2>
+
+          <p className="mt-2 text-slate-400">
+            Real-time analysis based on current complaint data.
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsAnalysisOpen(false)}
+          className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-white transition hover:border-red-400 hover:bg-red-500/10 hover:text-red-400"
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Metrics */}
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5">
+          <p className="text-sm text-slate-400">
+            Total Workload
+          </p>
+
+          <h3 className="mt-2 text-3xl font-black text-cyan-400">
+            {stats.total}
+          </h3>
+        </div>
+
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
+          <p className="text-sm text-slate-400">
+            Resolution Rate
+          </p>
+
+          <h3 className="mt-2 text-3xl font-black text-emerald-400">
+            {resolutionRate}%
+          </h3>
+        </div>
+
+        <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5">
+          <p className="text-sm text-slate-400">
+            Critical Rate
+          </p>
+
+          <h3 className="mt-2 text-3xl font-black text-orange-400">
+            {criticalRate}%
+          </h3>
+        </div>
+
+        <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
+          <p className="text-sm text-slate-400">
+            System Health
+          </p>
+
+          <h3 className="mt-2 text-3xl font-black text-violet-400">
+            {systemHealth}%
+          </h3>
+        </div>
+      </div>
+
+      {/* Operational Analysis */}
+      <div className="mt-6 grid gap-6 md:grid-cols-2">
+        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
+          <h3 className="text-xl font-bold text-white">
+            Operational Status
+          </h3>
+
+          <div className="mt-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">
+                Active Complaints
+              </span>
+
+              <span className="font-bold text-cyan-400">
+                {activeComplaints}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">
+                Pending
+              </span>
+
+              <span className="font-bold text-yellow-400">
+                {stats.pending}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">
+                In Progress
+              </span>
+
+              <span className="font-bold text-blue-400">
+                {stats.inProgress}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400">
+                High Priority
+              </span>
+
+              <span className="font-bold text-orange-400">
+                {stats.critical}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Recommendation */}
+        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 p-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400">
+            {recommendation.level} Priority Recommendation
+          </p>
+
+          <h3 className="mt-4 text-xl font-bold text-white">
+            {recommendation.title}
+          </h3>
+
+          <p className="mt-3 leading-7 text-slate-300">
+            {recommendation.message}
+          </p>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="mt-8 flex justify-end">
+        <button
+          onClick={() => setIsAnalysisOpen(false)}
+          className="rounded-xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400"
+        >
+          Close Analysis
+        </button>
+      </div>
+    </motion.div>
+  </div>
+)}
+     {selectedComplaint && (
   <ComplaintModal
     complaint={selectedComplaint}
     onClose={() => setSelectedComplaint(null)}
+
+    onUpdated={(updatedComplaint) => {
+      setActivities((prev) =>
+        prev.map((activity) =>
+          activity._id === updatedComplaint._id
+            ? updatedComplaint
+            : activity
+        )
+      );
+
+      setSelectedComplaint(updatedComplaint);
+    }}
+
+    onDeleted={(deletedId) => {
+      setActivities((prev) =>
+        prev.filter(
+          (activity) => activity._id !== deletedId
+        )
+      );
+
+      setSelectedComplaint(null);
+
+      setStats((prev) => ({
+        ...prev,
+        total: Math.max(0, prev.total - 1),
+      }));
+    }}
   />
 )}
     </main>
