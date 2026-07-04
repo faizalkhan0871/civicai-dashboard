@@ -8,6 +8,7 @@ const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoutes");
 const complaintRoutes = require("./routes/complaintRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const path = require("path");
 const errorHandler = require("./middleware/errorMiddleware");
 dotenv.config();
@@ -37,7 +38,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/auth", authRoutes);
 app.use("/api/complaints", complaintRoutes);
 app.use("/api/upload", uploadRoutes);
-
+app.use("/api/ai", aiRoutes);
 app.get("/", (req, res) => {
   res.json({
     message: "CivicAI Backend Running 🚀",

@@ -11,6 +11,10 @@ import { getDashboardStats } from "@/services/dashboardService";
 import { getComplaints } from "@/services/complaintService";
 import { getRecentActivity } from "@/services/activityService";
 import ComplaintModal from "@/components/ComplaintModal";
+import {
+  analyzeComplaintsWithAI,
+  AIAnalysisResponse,
+} from "@/services/aiService";
 
 import { motion } from "framer-motion"
 import {
@@ -55,6 +59,16 @@ const [weeklyData, setWeeklyData] = useState([
   { day: "Sat", count: 0 },
   { day: "Sun", count: 0 },
 ]);
+const [aiAnalysis, setAiAnalysis] =
+  useState<AIAnalysisResponse | null>(null);
+
+const [isAnalyzing, setIsAnalyzing] =
+  useState(false);
+
+const [aiError, setAiError] =
+  useState("");
+  const [analysisGeneratedAt, setAnalysisGeneratedAt] =
+  useState<Date | null>(null);
 const activeComplaints = stats.pending + stats.inProgress;
 
 const resolutionRate =
@@ -221,7 +235,26 @@ const handleLogout = () => {
   localStorage.removeItem("token");
   router.push("/login");
 };
+const handleAIAnalysis = async () => {
+  try {
+    setIsAnalyzing(true);
+    setAiError("");
 
+    const result = await analyzeComplaintsWithAI();
+
+setAiAnalysis(result);
+setAnalysisGeneratedAt(new Date());
+setIsAnalysisOpen(true);
+  } catch (error) {
+    console.error("AI Analysis Error:", error);
+
+    setAiError(
+      "AI analysis could not be generated. Please try again."
+    );
+  } finally {
+    setIsAnalyzing(false);
+  }
+};
 useEffect(() => {
   const fetchStats = async () => {
     try {
@@ -393,6 +426,19 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
   };
 
   fetchStats();
+}, []);
+useEffect(() => {
+  const handleEscapeKey = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      setIsAnalysisOpen(false);
+    }
+  };
+
+  window.addEventListener("keydown", handleEscapeKey);
+
+  return () => {
+    window.removeEventListener("keydown", handleEscapeKey);
+  };
 }, []);
   return (
     <main className="min-h-screen bg-[#020617] relative overflow-hidden">
@@ -598,16 +644,40 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
 </button>
 
   <button
-  onClick={() => setIsAnalysisOpen(true)}
-  className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-emerald-400"
+  onClick={handleAIAnalysis}
+  disabled={isAnalyzing}
+  className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
 >
-  🤖 AI Analysis
+  {isAnalyzing
+    ? "🧠 Analyzing Complaints..."
+    : "🤖 AI Analysis"}
 </button>
   <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-orange-400">
     ⚡ Live Monitor
   </button>
 
 </section>
+{aiError && (
+  <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-red-500/30 bg-red-500/10 p-5 sm:flex-row sm:items-center sm:justify-between">
+    <div>
+      <p className="font-semibold text-red-400">
+        AI Analysis Failed
+      </p>
+
+      <p className="mt-1 text-sm text-red-300/80">
+        {aiError}
+      </p>
+    </div>
+
+    <button
+      onClick={handleAIAnalysis}
+      disabled={isAnalyzing}
+      className="shrink-0 rounded-xl bg-red-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {isAnalyzing ? "Retrying..." : "Retry Analysis"}
+    </button>
+  </div>
+)}
         </motion.div>
 
         <div className="mt-12 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
@@ -977,7 +1047,50 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
 
       </div>
       </div>
-      {isAnalysisOpen && (
+      {isAnalyzing && (
+  <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="w-full max-w-md rounded-3xl border border-cyan-500/20 bg-slate-950 p-8 text-center shadow-[0_0_80px_rgba(34,211,238,0.18)]"
+    >
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{
+          duration: 1.2,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+        className="mx-auto h-16 w-16 rounded-full border-4 border-slate-800 border-t-cyan-400"
+      />
+
+      <h3 className="mt-6 text-2xl font-bold text-white">
+        Analyzing Civic Data
+      </h3>
+
+      <p className="mt-3 leading-7 text-slate-400">
+        Gemini AI is reviewing complaint patterns,
+        priorities and operational risks.
+      </p>
+
+      <div className="mt-6 flex items-center justify-center gap-2">
+        {[0, 1, 2].map((item) => (
+          <motion.span
+            key={item}
+            animate={{ opacity: [0.3, 1, 0.3] }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              delay: item * 0.2,
+            }}
+            className="h-2 w-2 rounded-full bg-cyan-400"
+          />
+        ))}
+      </div>
+    </motion.div>
+  </div>
+)}
+      {isAnalysisOpen && aiAnalysis && (
   <div
     className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
     onClick={() => setIsAnalysisOpen(false)}
@@ -1003,6 +1116,52 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
           <p className="mt-2 text-slate-400">
             Real-time analysis based on current complaint data.
           </p>
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+  <div className="flex items-center gap-2 text-sm text-slate-500">
+    <Clock3 size={16} className="text-cyan-400" />
+
+    <span>
+      Generated:{" "}
+      {analysisGeneratedAt
+        ? analysisGeneratedAt.toLocaleString()
+        : "Just now"}
+    </span>
+  </div>
+
+  <button
+    onClick={handleAIAnalysis}
+    disabled={isAnalyzing}
+    className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400 transition hover:border-cyan-400 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+  >
+    {isAnalyzing ? "Regenerating..." : "↻ Regenerate Analysis"}
+  </button>
+</div>
+          <div className="mt-6 rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5">
+  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">
+    Gemini AI Summary
+  </p>
+
+  <p className="mt-3 leading-7 text-slate-300">
+    {aiAnalysis.summary}
+  </p>
+  <div className="mt-4 flex items-center gap-3">
+  <span className="text-sm text-slate-400">
+    AI Risk Level:
+  </span>
+
+  <span
+    className={`rounded-full px-4 py-2 text-sm font-bold ${
+      aiAnalysis.riskLevel === "High"
+        ? "bg-red-500/15 text-red-400"
+        : aiAnalysis.riskLevel === "Medium"
+        ? "bg-orange-500/15 text-orange-400"
+        : "bg-emerald-500/15 text-emerald-400"
+    }`}
+  >
+    {aiAnalysis.riskLevel}
+  </span>
+</div>
+</div>
         </div>
 
         <button
@@ -1012,116 +1171,81 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
           ✕
         </button>
       </div>
+<div className="mt-8">
+  <h3 className="text-xl font-bold text-white">
+    Top Issues Identified
+  </h3>
 
-      {/* Metrics */}
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5">
-          <p className="text-sm text-slate-400">
-            Total Workload
-          </p>
+  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+    {aiAnalysis.topIssues.map((issue, index) => (
+      <div
+        key={`${issue}-${index}`}
+        className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-4"
+      >
+        <div className="flex items-start gap-3">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-sm font-bold text-orange-400">
+            {index + 1}
+          </span>
 
-          <h3 className="mt-2 text-3xl font-black text-cyan-400">
-            {stats.total}
-          </h3>
-        </div>
-
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-5">
-          <p className="text-sm text-slate-400">
-            Resolution Rate
-          </p>
-
-          <h3 className="mt-2 text-3xl font-black text-emerald-400">
-            {resolutionRate}%
-          </h3>
-        </div>
-
-        <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5">
-          <p className="text-sm text-slate-400">
-            Critical Rate
-          </p>
-
-          <h3 className="mt-2 text-3xl font-black text-orange-400">
-            {criticalRate}%
-          </h3>
-        </div>
-
-        <div className="rounded-2xl border border-violet-500/20 bg-violet-500/5 p-5">
-          <p className="text-sm text-slate-400">
-            System Health
-          </p>
-
-          <h3 className="mt-2 text-3xl font-black text-violet-400">
-            {systemHealth}%
-          </h3>
-        </div>
-      </div>
-
-      {/* Operational Analysis */}
-      <div className="mt-6 grid gap-6 md:grid-cols-2">
-        <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6">
-          <h3 className="text-xl font-bold text-white">
-            Operational Status
-          </h3>
-
-          <div className="mt-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">
-                Active Complaints
-              </span>
-
-              <span className="font-bold text-cyan-400">
-                {activeComplaints}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">
-                Pending
-              </span>
-
-              <span className="font-bold text-yellow-400">
-                {stats.pending}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">
-                In Progress
-              </span>
-
-              <span className="font-bold text-blue-400">
-                {stats.inProgress}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">
-                High Priority
-              </span>
-
-              <span className="font-bold text-orange-400">
-                {stats.critical}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Recommendation */}
-        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-emerald-400">
-            {recommendation.level} Priority Recommendation
-          </p>
-
-          <h3 className="mt-4 text-xl font-bold text-white">
-            {recommendation.title}
-          </h3>
-
-          <p className="mt-3 leading-7 text-slate-300">
-            {recommendation.message}
+          <p className="leading-6 text-slate-300">
+            {issue}
           </p>
         </div>
       </div>
+    ))}
+  </div>
+</div>
+<div className="mt-8 rounded-2xl border border-violet-500/20 bg-violet-500/5 p-6">
+  <h3 className="text-xl font-bold text-white">
+    Key Findings
+  </h3>
 
+  <div className="mt-4 space-y-3">
+    {aiAnalysis.keyFindings.map((finding, index) => (
+      <div
+        key={`${finding}-${index}`}
+        className="flex items-start gap-3"
+      >
+        <span className="mt-1 text-violet-400">
+          ✦
+        </span>
+
+        <p className="leading-7 text-slate-300">
+          {finding}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+      
+
+      
+<div className="mt-8">
+  <div className="flex items-center gap-3">
+    <span className="text-2xl">⚡</span>
+
+    <h3 className="text-xl font-bold text-white">
+      Recommended Actions
+    </h3>
+  </div>
+
+  <div className="mt-4 space-y-3">
+    {aiAnalysis.recommendedActions.map((action, index) => (
+      <div
+        key={`${action}-${index}`}
+        className="group flex items-start gap-4 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 transition hover:border-emerald-400/50"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-sm font-bold text-emerald-400">
+          {index + 1}
+        </span>
+
+        <p className="leading-7 text-slate-300">
+          {action}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
       {/* Footer */}
       <div className="mt-8 flex justify-end">
         <button
