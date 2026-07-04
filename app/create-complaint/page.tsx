@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { createComplaint } from "@/services/complaintService";
+import { uploadComplaintImage } from "@/services/uploadService";
 
 export default function CreateComplaintPage() {
     const [formData, setFormData] = useState({
@@ -10,15 +11,44 @@ export default function CreateComplaintPage() {
   priority: "Medium",
   location: "",
 });
+const [selectedImage, setSelectedImage] = useState<File | null>(null);
+const [imagePreview, setImagePreview] = useState<string | null>(null);
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
 
   try {
-    const response = await createComplaint(formData);
+    let imagePath = "";
+
+    // Step 1: Upload image if selected
+    if (selectedImage) {
+      const uploadResponse = await uploadComplaintImage(selectedImage);
+      imagePath = uploadResponse.image;
+    }
+
+    // Step 2: Create complaint with image path
+    const complaintData = {
+      ...formData,
+      image: imagePath,
+    };
+
+    const response = await createComplaint(complaintData);
 
     console.log(response);
 
     alert("Complaint Created Successfully ✅");
+
+    // Step 3: Reset form
+    setFormData({
+      title: "",
+      description: "",
+      category: "Road Damage",
+      priority: "Medium",
+      location: "",
+    });
+
+    setSelectedImage(null);
+    setImagePreview(null);
+
   } catch (error) {
     console.error(error);
     alert("Failed to create complaint");
@@ -136,7 +166,35 @@ const handleSubmit = async (e: React.FormEvent) => {
   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 outline-none focus:border-cyan-400"
 />
   </div>
+<div>
+  <label className="mb-2 block text-sm text-slate-300">
+    Complaint Image
+  </label>
 
+  <input
+    type="file"
+    accept="image/jpeg,image/png,image/webp"
+    onChange={(e) => {
+      const file = e.target.files?.[0];
+
+      if (!file) return;
+
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }}
+    className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-300 outline-none focus:border-cyan-400"
+  />
+
+  {imagePreview && (
+    <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700">
+      <img
+        src={imagePreview}
+        alt="Complaint preview"
+        className="h-64 w-full object-cover"
+      />
+    </div>
+  )}
+</div>
   <button
     type="submit"
     className="rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400"

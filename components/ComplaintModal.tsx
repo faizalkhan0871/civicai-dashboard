@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -20,12 +21,15 @@ export default function ComplaintModal({
   complaint,
   onClose,
 }: ComplaintModalProps) {
+  const [isImageOpen, setIsImageOpen] = useState(false);
+
   if (!complaint) return null;
 
   return (
     <AnimatePresence>
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+       key="complaint-modal"
+        className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-md p-4"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -37,7 +41,7 @@ export default function ComplaintModal({
           exit={{ scale: 0.9, opacity: 0, y: 30 }}
           transition={{ duration: 0.25 }}
           onClick={(e) => e.stopPropagation()}
-          className="relative w-full max-w-3xl rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl"
+          className="relative mx-auto my-8 w-full max-w-3xl rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl"
         >
           {/* Header */}
 
@@ -121,7 +125,28 @@ export default function ComplaintModal({
             </div>
 
           </div>
+{/* Complaint Image */}
 
+{complaint.image && (
+  <div className="border-t border-slate-800 p-6">
+    <div className="flex items-center gap-2">
+      <FileText size={18} className="text-cyan-400" />
+
+      <h3 className="text-lg font-semibold text-white">
+        Complaint Evidence
+      </h3>
+    </div>
+
+    <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
+      <img
+  src={`http://localhost:5000${complaint.image}`}
+  alt="Complaint Evidence"
+  onClick={() => setIsImageOpen(true)}
+  className="h-72 w-full cursor-zoom-in object-cover transition duration-500 hover:scale-105"
+/>
+    </div>
+  </div>
+)}
           {/* Description */}
 
           <div className="border-t border-slate-800 p-6">
@@ -184,6 +209,34 @@ export default function ComplaintModal({
 </div>
         </motion.div>
       </motion.div>
+      {isImageOpen && (
+  <motion.div
+   key="image-lightbox"
+    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-6 backdrop-blur-md"
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    onClick={() => setIsImageOpen(false)}
+  >
+    <button
+      onClick={() => setIsImageOpen(false)}
+      className="absolute right-6 top-6 rounded-full bg-white/10 p-3 text-white transition hover:bg-red-500"
+    >
+      <X className="h-6 w-6" />
+    </button>
+
+    <motion.img
+      src={`http://localhost:5000${complaint.image}`}
+      alt="Complaint Evidence Fullscreen"
+      initial={{ scale: 0.85, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.85, opacity: 0 }}
+      transition={{ duration: 0.25 }}
+      onClick={(e) => e.stopPropagation()}
+      className="max-h-[90vh] max-w-[95vw] rounded-2xl object-contain shadow-2xl"
+    />
+  </motion.div>
+)}
     </AnimatePresence>
   );
 }

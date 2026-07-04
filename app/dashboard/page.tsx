@@ -182,8 +182,8 @@ useEffect(() => {
     try {
       const data = await getDashboardStats();
       setStats(data);
-      const recentActivity = await getRecentActivity();
-setActivities(recentActivity);
+      const complaints = await getComplaints();
+setActivities(complaints.slice(0, 6));
     } catch (error) {
       console.error("Failed to load dashboard stats:", error);
     }
