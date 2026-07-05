@@ -5,7 +5,7 @@ import Hero from "@/components/Hero";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import Link from "next/link"
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDashboardStats } from "@/services/dashboardService";
 import { getComplaints } from "@/services/complaintService";
@@ -37,7 +37,16 @@ type CopilotMessage = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  timestamp?: string;
 };
+const COPILOT_WELCOME_MESSAGE: CopilotMessage = {
+  id: "welcome-message",
+  role: "assistant",
+  content:
+    "Hello! I am CivicAI Copilot. Ask me about complaints, priorities, risks, pending issues, or civic operations in any language.",
+};
+
+const COPILOT_STORAGE_KEY = "civicai-copilot-messages";
 export default function Home() {
     const router = useRouter();
   const [stats, setStats] = useState({
@@ -88,13 +97,15 @@ const [copilotError, setCopilotError] =
 
 const [copilotMessages, setCopilotMessages] =
   useState<CopilotMessage[]>([
-    {
-      id: "welcome-message",
-      role: "assistant",
-      content:
-        "Hello! I am CivicAI Copilot. Ask me about complaints, priorities, risks, pending issues, or civic operations in any language.",
-    },
+    COPILOT_WELCOME_MESSAGE,
   ]);
+
+const [isCopilotHistoryLoaded, setIsCopilotHistoryLoaded] =
+  useState(false);
+  const [copiedMessageId, setCopiedMessageId] =
+  useState<string | null>(null);
+  const copilotMessagesEndRef =
+  useRef<HTMLDivElement | null>(null);
 const activeComplaints = stats.pending + stats.inProgress;
 
 const resolutionRate =
@@ -293,10 +304,11 @@ const handleSendCopilotMessage = async (
   }
 
   const userMessage: CopilotMessage = {
-    id: `user-${Date.now()}`,
-    role: "user",
-    content: messageToSend,
-  };
+  id: `user-${Date.now()}`,
+  role: "user",
+  content: messageToSend,
+  timestamp: new Date().toISOString(),
+};
 
   const previousMessages = copilotMessages;
 
@@ -327,11 +339,11 @@ const handleSendCopilotMessage = async (
     );
 
     const assistantMessage: CopilotMessage = {
-      id: `assistant-${Date.now()}`,
-      role: "assistant",
-      content: result.reply,
-    };
-
+  id: `assistant-${Date.now()}`,
+  role: "assistant",
+  content: result.reply,
+  timestamp: new Date().toISOString(),
+};
     setCopilotMessages((prev) => [
       ...prev,
       assistantMessage,
@@ -347,6 +359,31 @@ const handleSendCopilotMessage = async (
     );
   } finally {
     setIsCopilotTyping(false);
+  }
+};
+const handleCopyCopilotMessage = async (
+  messageId: string,
+  content: string
+) => {
+  try {
+    await navigator.clipboard.writeText(content);
+
+    setCopiedMessageId(messageId);
+
+    window.setTimeout(() => {
+      setCopiedMessageId((currentId) =>
+        currentId === messageId ? null : currentId
+      );
+    }, 1800);
+  } catch (error) {
+    console.error(
+      "Failed to copy Copilot message:",
+      error
+    );
+
+    setCopilotError(
+      "Could not copy the response."
+    );
   }
 };
 useEffect(() => {
@@ -535,6 +572,76 @@ useEffect(() => {
     window.removeEventListener("keydown", handleEscapeKey);
   };
 }, []);
+useEffect(() => {
+  if (!isCopilotOpen) return;
+
+  copilotMessagesEndRef.current?.scrollIntoView({
+    behavior: "smooth",
+  });
+}, [
+  copilotMessages,
+  isCopilotTyping,
+  isCopilotOpen,
+]);
+useEffect(() => {
+  try {
+    const savedMessages = localStorage.getItem(
+      COPILOT_STORAGE_KEY
+    );
+
+    if (savedMessages) {
+      const parsedMessages = JSON.parse(savedMessages);
+
+      if (
+        Array.isArray(parsedMessages) &&
+        parsedMessages.length > 0
+      ) {
+        const validMessages = parsedMessages.filter(
+          (message): message is CopilotMessage =>
+            message &&
+            typeof message.id === "string" &&
+            (message.role === "user" ||
+              message.role === "assistant") &&
+            typeof message.content === "string"
+        );
+
+        if (validMessages.length > 0) {
+          setCopilotMessages(validMessages);
+        }
+      }
+    }
+  } catch (error) {
+    console.error(
+      "Failed to load Copilot history:",
+      error
+    );
+
+    localStorage.removeItem(
+      COPILOT_STORAGE_KEY
+    );
+  } finally {
+    setIsCopilotHistoryLoaded(true);
+  }
+}, []);
+
+useEffect(() => {
+  if (!isCopilotHistoryLoaded) return;
+
+  try {
+    localStorage.setItem(
+      COPILOT_STORAGE_KEY,
+      JSON.stringify(copilotMessages.slice(-30))
+    );
+  } catch (error) {
+    console.error(
+      "Failed to save Copilot history:",
+      error
+    );
+  }
+}, [
+  copilotMessages,
+  isCopilotHistoryLoaded,
+]);
   return (
     <main className="min-h-screen bg-[#020617] relative overflow-hidden">
       <div className="absolute inset-0 -z-10">
@@ -1455,38 +1562,97 @@ useEffect(() => {
               </div>
             </div>
           </div>
+<div className="flex items-center gap-2">
+  <button
+    onClick={() => {
+  setCopilotMessages([
+    COPILOT_WELCOME_MESSAGE,
+  ]);
 
-          <button
-            onClick={() => setIsCopilotOpen(false)}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-red-400 hover:bg-red-500/10 hover:text-red-400"
-          >
-            ✕
-          </button>
+  setCopilotError("");
+  setCopilotInput("");
+
+  localStorage.removeItem(
+    COPILOT_STORAGE_KEY
+  );
+}}
+    disabled={isCopilotTyping}
+    className="rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-400 transition hover:border-cyan-400 hover:text-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
+  >
+    Clear
+  </button>
+
+  <button
+    onClick={() => setIsCopilotOpen(false)}
+    className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-red-400 hover:bg-red-500/10 hover:text-red-400"
+  >
+    ✕
+  </button>
+</div>
+          
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 space-y-4 overflow-y-auto p-5">
         {copilotMessages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.role === "user"
-                ? "justify-end"
-                : "justify-start"
-            }`}
-          >
-            <div
-              className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-6 ${
-                message.role === "user"
-                  ? "rounded-br-md bg-cyan-500 text-slate-950"
-                  : "rounded-bl-md border border-slate-800 bg-slate-900 text-slate-200"
-              }`}
+  <div
+    key={message.id}
+    className={`flex ${
+      message.role === "user"
+        ? "justify-end"
+        : "justify-start"
+    }`}
+  >
+    <div className="max-w-[85%]">
+      <div
+        className={`whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-sm leading-6 ${
+          message.role === "user"
+            ? "rounded-br-md bg-cyan-500 text-slate-950"
+            : "rounded-bl-md border border-slate-800 bg-slate-900 text-slate-200"
+        }`}
+      >
+        {message.content}
+      </div>
+
+      <div
+        className={`mt-1.5 flex items-center gap-2 px-1 ${
+          message.role === "user"
+            ? "justify-end"
+            : "justify-start"
+        }`}
+      >
+        {message.timestamp && (
+          <span className="text-[10px] text-slate-600">
+            {new Date(
+              message.timestamp
+            ).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </span>
+        )}
+
+        {message.role === "assistant" &&
+          message.id !== "welcome-message" && (
+            <button
+              onClick={() =>
+                handleCopyCopilotMessage(
+                  message.id,
+                  message.content
+                )
+              }
+              className="rounded-md px-2 py-1 text-[10px] font-semibold text-slate-500 transition hover:bg-slate-800 hover:text-cyan-300"
             >
-              {message.content}
-            </div>
-          </div>
-        ))}
+              {copiedMessageId === message.id
+                ? "Copied ✓"
+                : "Copy"}
+            </button>
+          )}
+      </div>
+    </div>
+  </div>
+))}
 
         {isCopilotTyping && (
           <div className="flex justify-start">
@@ -1519,6 +1685,7 @@ useEffect(() => {
             </p>
           </div>
         )}
+        <div ref={copilotMessagesEndRef} />
       </div>
 
       {/* Suggested Prompts */}
