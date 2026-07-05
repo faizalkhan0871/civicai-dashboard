@@ -8,8 +8,10 @@ import Link from "next/link"
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDashboardStats } from "@/services/dashboardService";
-import { getComplaints } from "@/services/complaintService";
-import { getRecentActivity } from "@/services/activityService";
+import {
+  getComplaints,
+  getRecentActivity,
+} from "@/services/complaintService";
 import ComplaintModal from "@/components/ComplaintModal";
 import {
   analyzeComplaintsWithAI,
@@ -104,6 +106,25 @@ const [isCopilotHistoryLoaded, setIsCopilotHistoryLoaded] =
   useState(false);
   const [copiedMessageId, setCopiedMessageId] =
   useState<string | null>(null);
+  const [isLiveMonitorOpen, setIsLiveMonitorOpen] =
+  useState(false);
+
+const [isLiveMonitoring, setIsLiveMonitoring] =
+  useState(true);
+
+const [liveActivities, setLiveActivities] =
+  useState<any[]>([]);
+
+const [isLiveMonitorLoading, setIsLiveMonitorLoading] =
+  useState(false);
+
+const [liveMonitorError, setLiveMonitorError] =
+  useState("");
+
+const [liveLastUpdated, setLiveLastUpdated] =
+  useState<Date | null>(null);
+  const [liveRefreshCountdown, setLiveRefreshCountdown] =
+  useState(10);
   const copilotMessagesEndRef =
   useRef<HTMLDivElement | null>(null);
 const activeComplaints = stats.pending + stats.inProgress;
@@ -386,6 +407,41 @@ const handleCopyCopilotMessage = async (
     );
   }
 };
+const fetchLiveMonitorData = async (
+  showLoading = false
+) => {
+  try {
+    if (showLoading) {
+      setIsLiveMonitorLoading(true);
+    }
+
+    setLiveMonitorError("");
+
+    const data = await getRecentActivity();
+
+    const normalizedActivities = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.activities)
+      ? data.activities
+      : [];
+
+    setLiveActivities(normalizedActivities);
+    setLiveLastUpdated(new Date());
+  } catch (error) {
+    console.error(
+      "Live Monitor Error:",
+      error
+    );
+
+    setLiveMonitorError(
+      "Could not refresh live civic activity."
+    );
+  } finally {
+    if (showLoading) {
+      setIsLiveMonitorLoading(false);
+    }
+  }
+};
 useEffect(() => {
   const fetchStats = async () => {
     try {
@@ -563,6 +619,7 @@ useEffect(() => {
     if (event.key === "Escape") {
   setIsAnalysisOpen(false);
   setIsCopilotOpen(false);
+  setIsLiveMonitorOpen(false);
 }
   };
 
@@ -641,6 +698,40 @@ useEffect(() => {
 }, [
   copilotMessages,
   isCopilotHistoryLoaded,
+]);
+useEffect(() => {
+  if (!isLiveMonitorOpen) return;
+
+  fetchLiveMonitorData(true);
+}, [isLiveMonitorOpen]);
+
+useEffect(() => {
+  if (
+    !isLiveMonitorOpen ||
+    !isLiveMonitoring
+  ) {
+    return;
+  }
+
+  setLiveRefreshCountdown(10);
+
+  const countdownId = window.setInterval(() => {
+    setLiveRefreshCountdown((current) => {
+      if (current <= 1) {
+        fetchLiveMonitorData(false);
+        return 10;
+      }
+
+      return current - 1;
+    });
+  }, 1000);
+
+  return () => {
+    window.clearInterval(countdownId);
+  };
+}, [
+  isLiveMonitorOpen,
+  isLiveMonitoring,
 ]);
   return (
     <main className="min-h-screen bg-[#020617] relative overflow-hidden">
@@ -828,35 +919,41 @@ useEffect(() => {
 
   <Link
   href="/create-complaint"
-  className="rounded-2xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition hover:scale-105 hover:bg-cyan-400"
+  className="cursor-pointer rounded-2xl bg-cyan-500 px-6 py-3 font-semibold text-slate-950 transition-all duration-200 hover:scale-105 hover:bg-cyan-400"
 >
   + New Complaint
 </Link>
-  <button
+
+<button
   onClick={exportCSV}
-  className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-cyan-400"
+  className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400 hover:bg-cyan-500/15 hover:shadow-[0_10px_30px_rgba(34,211,238,0.12)]"
 >
   📊 Export Report
 </button>
+
 <button
   onClick={exportPDF}
-  className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-orange-400"
+  className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-400 hover:bg-violet-500/15 hover:shadow-[0_10px_30px_rgba(167,139,250,0.12)]"
 >
   📄 Export PDF
 </button>
 
-  <button
+<button
   onClick={handleAIAnalysis}
   disabled={isAnalyzing}
-  className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+  className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-fuchsia-400 hover:bg-fuchsia-500/15 hover:shadow-[0_10px_30px_rgba(232,121,249,0.12)] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0"
 >
   {isAnalyzing
     ? "🧠 Analyzing Complaints..."
     : "🤖 AI Analysis"}
 </button>
-  <button className="rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition hover:border-orange-400">
-    ⚡ Live Monitor
-  </button>
+
+<button
+  onClick={() => setIsLiveMonitorOpen(true)}
+  className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400 hover:bg-emerald-500/15 hover:shadow-[0_10px_30px_rgba(52,211,153,0.12)]"
+>
+  ⚡ Live Monitor
+</button>
 
 </section>
 {aiError && (
@@ -874,7 +971,7 @@ useEffect(() => {
     <button
       onClick={handleAIAnalysis}
       disabled={isAnalyzing}
-      className="shrink-0 rounded-xl bg-red-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-red-400 disabled:cursor-not-allowed disabled:opacity-50"
+      className="cursor-pointer rounded-2xl border border-slate-700 bg-slate-900/60 px-6 py-3 font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400 hover:bg-emerald-500/15 hover:shadow-[0_10px_30px_rgba(52,211,153,0.12)]"
     >
       {isAnalyzing ? "Retrying..." : "Retry Analysis"}
     </button>
@@ -1492,6 +1589,304 @@ useEffect(() => {
       }));
     }}
   />
+)}
+{isLiveMonitorOpen && (
+  <div
+    className="fixed inset-0 z-[130] flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+    onClick={() => setIsLiveMonitorOpen(false)}
+  >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.94, y: 25 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      onClick={(e) => e.stopPropagation()}
+      className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-emerald-500/20 bg-slate-950 shadow-[0_0_90px_rgba(16,185,129,0.14)]"
+    >
+      {/* Header */}
+      <div className="border-b border-slate-800 bg-gradient-to-r from-emerald-500/10 via-slate-950 to-cyan-500/10 p-6">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="text-2xl font-bold text-white">
+                Live Operations Center
+              </h2>
+
+              <span
+                className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${
+                  isLiveMonitoring
+                    ? "bg-emerald-500/15 text-emerald-400"
+                    : "bg-yellow-500/15 text-yellow-400"
+                }`}
+              >
+                <motion.span
+                  animate={
+                    isLiveMonitoring
+                      ? { opacity: [0.35, 1, 0.35] }
+                      : { opacity: 1 }
+                  }
+                  transition={{
+                    duration: 1.2,
+                    repeat: isLiveMonitoring
+                      ? Infinity
+                      : 0,
+                  }}
+                  className={`h-2 w-2 rounded-full ${
+                    isLiveMonitoring
+                      ? "bg-emerald-400"
+                      : "bg-yellow-400"
+                  }`}
+                />
+
+                {isLiveMonitoring ? "LIVE" : "PAUSED"}
+              </span>
+            </div>
+
+            <p className="mt-2 text-sm text-slate-400">
+              Civic activity refreshes automatically every 10 seconds.
+            </p>
+
+            <p className="mt-1 text-xs text-slate-600">
+              Last updated:{" "}
+              {liveLastUpdated
+                ? liveLastUpdated.toLocaleTimeString()
+                : "Waiting for first update..."}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+  if (!isLiveMonitoring) {
+    fetchLiveMonitorData(false);
+  }
+
+  setIsLiveMonitoring((prev) => !prev);
+}}
+              className="rounded-xl border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-semibold text-slate-300 transition hover:border-yellow-400 hover:text-yellow-300"
+            >
+              {isLiveMonitoring
+                ? "⏸ Pause"
+                : "▶ Resume"}
+            </button>
+
+            <button
+              onClick={() =>
+                fetchLiveMonitorData(true)
+              }
+              disabled={isLiveMonitorLoading}
+              className="rounded-xl border border-cyan-500/30 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-400 transition hover:border-cyan-400 hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isLiveMonitorLoading
+                ? "Refreshing..."
+                : "↻ Refresh"}
+            </button>
+
+            <button
+              onClick={() =>
+                setIsLiveMonitorOpen(false)
+              }
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-slate-900 text-slate-300 transition hover:border-red-400 hover:bg-red-500/10 hover:text-red-400"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="flex-1 overflow-y-auto p-6 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+  <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-4">
+    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      Recent Activity
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-cyan-400">
+      {liveActivities.length}
+    </p>
+  </div>
+
+  <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-4">
+    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      High Priority
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-red-400">
+      {
+        liveActivities.filter(
+          (activity: any) =>
+            activity.priority === "High"
+        ).length
+      }
+    </p>
+  </div>
+
+  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+      Next Refresh
+    </p>
+
+    <p className="mt-2 text-3xl font-bold text-emerald-400">
+      {isLiveMonitoring
+        ? `${liveRefreshCountdown}s`
+        : "Paused"}
+    </p>
+  </div>
+</div>
+        {liveMonitorError && (
+          <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-red-500/30 bg-red-500/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-red-300">
+              {liveMonitorError}
+            </p>
+
+            <button
+              onClick={() =>
+                fetchLiveMonitorData(true)
+              }
+              className="rounded-xl bg-red-500 px-4 py-2 text-sm font-bold text-white transition hover:bg-red-400"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {isLiveMonitorLoading &&
+        liveActivities.length === 0 ? (
+          <div className="flex min-h-[350px] flex-col items-center justify-center">
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{
+                duration: 1,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+              className="h-14 w-14 rounded-full border-4 border-slate-800 border-t-emerald-400"
+            />
+
+            <p className="mt-5 text-slate-400">
+              Loading live civic activity...
+            </p>
+          </div>
+        ) : liveActivities.length === 0 ? (
+          <div className="flex min-h-[350px] flex-col items-center justify-center text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-900 text-3xl">
+              📡
+            </div>
+
+            <h3 className="mt-5 text-xl font-bold text-white">
+              No Recent Activity
+            </h3>
+
+            <p className="mt-2 max-w-md text-slate-400">
+              The monitor is connected, but no recent civic
+              activity is available right now.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {liveActivities.map(
+              (activity: any, index: number) => (
+                <motion.div
+                  key={
+                    activity._id ??
+                    `live-activity-${index}`
+                  }
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5 transition hover:border-emerald-500/30"
+                >
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-400">
+                          {activity.category ??
+                            "Civic Activity"}
+                        </span>
+
+                        <span
+                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                            activity.status === "Resolved"
+                              ? "bg-emerald-500/10 text-emerald-400"
+                              : activity.status ===
+                                "In Progress"
+                              ? "bg-blue-500/10 text-blue-400"
+                              : "bg-yellow-500/10 text-yellow-400"
+                          }`}
+                        >
+                          {activity.status ?? "Updated"}
+                        </span>
+
+                        {activity.priority && (
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              activity.priority === "High"
+                                ? "bg-red-500/10 text-red-400"
+                                : activity.priority ===
+                                  "Medium"
+                                ? "bg-orange-500/10 text-orange-400"
+                                : "bg-slate-800 text-slate-400"
+                            }`}
+                          >
+                            {activity.priority} Priority
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="mt-3 text-lg font-bold text-white">
+                        {activity.title ??
+                          "Civic activity update"}
+                      </h3>
+
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-400">
+                        {activity.description ??
+                          "Complaint activity was updated."}
+                      </p>
+
+                      <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-500">
+                        {activity.location && (
+                          <span>
+                            📍 {activity.location}
+                          </span>
+                        )}
+
+                        {activity.createdAt && (
+                          <span>
+                            🕒{" "}
+                            {new Date(
+                              activity.createdAt
+                            ).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <span className="shrink-0 text-xs font-semibold text-emerald-400">
+                      #{index + 1}
+                    </span>
+                  </div>
+                </motion.div>
+              )
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-slate-800 bg-slate-950/90 px-6 py-4">
+        <div className="flex flex-col gap-2 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <span>
+            {liveActivities.length} recent activities loaded
+          </span>
+
+          <span>
+            {isLiveMonitoring
+              ? "Automatic monitoring active"
+              : "Automatic monitoring paused"}
+          </span>
+        </div>
+      </div>
+    </motion.div>
+  </div>
 )}
 {/* CivicAI Copilot */}
 <div className="fixed bottom-6 right-6 z-[120]">

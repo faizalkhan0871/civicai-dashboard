@@ -56,3 +56,17 @@ export const deleteComplaint = async (id: string) => {
 
   return response.data;
 };
+export const getRecentActivity = async () => {
+  const token = localStorage.getItem("token");
+
+  const response = await api.get(
+    "/complaints/activity",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+};
