@@ -10,10 +10,14 @@ const complaintRoutes = require("./routes/complaintRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const path = require("path");
+const dns = require("dns");
 const errorHandler = require("./middleware/errorMiddleware");
-dotenv.config();
-connectDB();
 
+dotenv.config();
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+connectDB();
 const app = express();
 app.use(
   helmet({
@@ -32,7 +36,24 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-app.use(cors());
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:3000",
+  "http://localhost:3001",
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/auth", authRoutes);
