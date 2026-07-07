@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CivicAI
 
-## Getting Started
+CivicAI is an AI-powered civic complaint management platform designed to help administrators monitor, analyze, prioritize, and resolve public grievances through a centralized dashboard.
 
-First, run the development server:
+The platform combines complaint management, analytics, AI-assisted analysis, multilingual interaction, and live monitoring in a modern full-stack application.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Live Demo
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Frontend: https://civicai-dashboard.vercel.app
+- Backend API: https://civicai-backend-ufkc.onrender.com
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+> Note: The backend is hosted on Render's free tier, so the first request may take some time if the service is inactive.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Key Features
 
-## Learn More
+- Secure user registration and login
+- JWT-based authentication
+- Create, view, update, and delete civic complaints
+- Complaint status and priority tracking
+- Dashboard statistics and analytics
+- AI-powered complaint analysis using Gemini
+- Multilingual CivicAI Copilot
+- Live complaint monitoring
+- Complaint filtering and search
+- Export reports
+- Responsive dark-themed dashboard
+- MongoDB-based persistent data storage
 
-To learn more about Next.js, take a look at the following resources:
+## Tech Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Frontend
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Axios
 
-## Deploy on Vercel
+### Backend
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT Authentication
+- bcrypt
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### AI Integration
+
+- Google Gemini API
+- Multilingual AI Copilot
+- AI-assisted complaint analysis
+
+### Deployment
+
+- Vercel for frontend deployment
+- Render for backend deployment
+- MongoDB Atlas for cloud database
+
+## Project Architecture
+
+```text
+CivicAI
+│
+├── Frontend
+│   ├── Next.js
+│   ├── TypeScript
+│   ├── Tailwind CSS
+│   └── Axios
+│
+├── Backend
+│   ├── Node.js
+│   ├── Express.js
+│   ├── MongoDB
+│   └── JWT Authentication
+│
+└── AI Layer
+    ├── Gemini API
+    ├── Complaint Analysis
+    └── Multilingual Copilot
