@@ -26,7 +26,7 @@ export default function LoginPage() {
 
   localStorage.setItem("token", res.data.token);
 
-  alert(localStorage.getItem("token"));
+  
 
   alert("Login Successful ✅");
 
