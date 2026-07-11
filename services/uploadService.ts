@@ -1,16 +1,18 @@
-import axios from "axios";
-import { getToken } from "@/lib/auth";
-export const uploadComplaintImage = async (imageFile: File) => {
- const token = getToken();
+import api from "@/lib/api";
+
+export const uploadComplaintImage = async (
+  imageFile: File
+) => {
   const formData = new FormData();
+
   formData.append("image", imageFile);
 
-  const response = await axios.post(
-    "http://localhost:5000/api/upload",
+  const response = await api.post(
+    "/upload",
     formData,
     {
       headers: {
-        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
       },
     }
   );

@@ -1,13 +1,7 @@
 import api from "@/lib/api";
-import { getToken } from "@/lib/auth";
-export const getRecentActivity = async () => {
-  const token = getToken();
 
-  const response = await api.get("/complaints/activity", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export const getRecentActivity = async () => {
+  const response = await api.get("/complaints/activity");
 
   return response.data;
 };
