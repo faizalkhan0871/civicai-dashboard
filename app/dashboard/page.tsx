@@ -1,4 +1,8 @@
 "use client"
+import {
+  logout,
+  getUser,
+} from "@/lib/auth";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CountUp from "react-countup";
@@ -308,10 +312,7 @@ const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
 
 const confirmLogout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
-  localStorage.removeItem("civicai-copilot-messages");
-
+  logout();
   setShowLogoutDialog(false);
 
   router.replace("/login");
@@ -644,10 +645,10 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
   };
 
   fetchStats();
-  const storedUser = localStorage.getItem("user");
+  const storedUser = getUser();
 
 if (storedUser) {
-  setCurrentUser(JSON.parse(storedUser));
+  setCurrentUser(storedUser);
 }
 }, []);
 useEffect(() => {

@@ -1,5 +1,5 @@
 "use client";
-
+import { setToken, setUser } from "@/lib/auth";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -33,11 +33,8 @@ useEffect(() => {
 
   console.log(res.data);
 
-  localStorage.setItem("token", res.data.token);
-localStorage.setItem(
-  "user",
-  JSON.stringify(res.data.user)
-);
+  setToken(res.data.token);
+setUser(res.data.user);
   localStorage.removeItem("civicai-copilot-messages");
 
   toast.success("Welcome back!");

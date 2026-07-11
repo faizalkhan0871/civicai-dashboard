@@ -1,7 +1,5 @@
 "use client";
 
-import Link from "next/link";
-
 interface DashboardHeaderProps {
   greeting: string;
   currentUser: any;
@@ -27,13 +25,6 @@ export default function DashboardHeader({
           Monitor complaints, AI insights and city operations from one place.
         </p>
       </div>
-
-      <Link
-        href="/complaints"
-        className="rounded-xl bg-cyan-500 px-5 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400"
-      >
-        View Complaints
-      </Link>
     </div>
   );
 }
