@@ -1,4 +1,5 @@
 "use client"
+import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import CountUp from "react-countup";
 import { toast } from "sonner";
