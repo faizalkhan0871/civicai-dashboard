@@ -1,8 +1,7 @@
 import axios from "axios";
-
+import { getToken } from "@/lib/auth";
 export const uploadComplaintImage = async (imageFile: File) => {
-  const token = localStorage.getItem("token");
-
+ const token = getToken();
   const formData = new FormData();
   formData.append("image", imageFile);
 

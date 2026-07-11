@@ -1,7 +1,7 @@
 import api from "@/lib/api";
-
+import { getToken } from "@/lib/auth";
 export const getComplaints = async () => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   const response = await api.get("/complaints", {
     headers: {
@@ -13,8 +13,7 @@ export const getComplaints = async () => {
 };
 
 export const createComplaint = async (complaintData: any) => {
-  const token = localStorage.getItem("token");
-
+  const token = getToken();
   const response = await api.post("/complaints", complaintData, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -27,7 +26,7 @@ export const updateComplaint = async (
   id: string,
   complaintData: any
 ) => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   const response = await api.put(
     `/complaints/${id}`,
@@ -43,8 +42,7 @@ export const updateComplaint = async (
 };
 
 export const deleteComplaint = async (id: string) => {
-  const token = localStorage.getItem("token");
-
+ const token = getToken();
   const response = await api.delete(
     `/complaints/${id}`,
     {
@@ -57,7 +55,7 @@ export const deleteComplaint = async (id: string) => {
   return response.data;
 };
 export const getRecentActivity = async () => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   const response = await api.get(
     "/complaints/activity",

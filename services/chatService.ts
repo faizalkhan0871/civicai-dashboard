@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-
+import { getToken } from "@/lib/auth";
 export type ChatHistoryItem = {
   role: "user" | "assistant";
   content: string;
@@ -13,8 +13,7 @@ export const sendChatMessage = async (
   message: string,
   history: ChatHistoryItem[]
 ): Promise<ChatResponse> => {
-  const token = localStorage.getItem("token");
-
+  const token = getToken();
   const response = await api.post(
     "/ai/chat",
     {

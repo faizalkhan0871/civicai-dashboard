@@ -1,7 +1,7 @@
 import api from "@/lib/api";
-
+import { getToken } from "@/lib/auth";
 export const getAnalytics = async () => {
-  const token = localStorage.getItem("token");
+  const token = getToken();
 
   const response = await api.get("/complaints/analytics", {
     headers: {
