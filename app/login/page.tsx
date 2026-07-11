@@ -1,16 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
+import { toast } from "sonner";
 
 export default function LoginPage() {
   const router = useRouter();
+useEffect(() => {
+  const token = localStorage.getItem("token");
 
+  if (token) {
+    router.replace("/dashboard");
+  } else {
+    setCheckingAuth(false);
+  }
+}, [router]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -25,22 +34,34 @@ export default function LoginPage() {
   console.log(res.data);
 
   localStorage.setItem("token", res.data.token);
+localStorage.setItem(
+  "user",
+  JSON.stringify(res.data.user)
+);
+  localStorage.removeItem("civicai-copilot-messages");
 
-  
+  toast.success("Welcome back!");
 
-  alert("Login Successful ✅");
-
-  router.push("/dashboard");
+  router.replace("/dashboard");
 } catch (err: any) {
   console.log(err);
   console.log(err.response);
   console.log(err.response?.data);
 
-  alert(err?.response?.data?.message || "Login Failed");
+  toast.error(
+  err?.response?.data?.message || "Login failed"
+);
 } finally {
   setLoading(false);
 }
   };
+  if (checkingAuth) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <p className="text-slate-300 text-lg">Loading...</p>
+    </div>
+  );
+}
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950">

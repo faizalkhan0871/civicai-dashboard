@@ -1,5 +1,7 @@
 "use client"
+import ConfirmDialog from "@/components/ConfirmDialog";
 import CountUp from "react-countup";
+import { toast } from "sonner";
 
 import Hero from "@/components/Hero";
 import jsPDF from "jspdf";
@@ -60,7 +62,9 @@ export default function Home() {
 });
 const [selectedComplaint, setSelectedComplaint] = useState<any>(null);
 const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+
 const [activities, setActivities] = useState<any[]>([]);
+const latestNotifications = activities.slice(0, 3);
 const [weeklyGrowth, setWeeklyGrowth] = useState(0);
 const [resolvedGrowth, setResolvedGrowth] = useState(0);
 const [recommendation, setRecommendation] = useState({
@@ -178,7 +182,6 @@ const exportCSV = async () => {
       headers.join(","),
       ...rows.map((row: any) => row.join(",")),
     ].join("\n");
-
     const blob = new Blob([csvContent], {
       type: "text/csv;charset=utf-8;",
     });
@@ -196,8 +199,10 @@ const exportCSV = async () => {
 
     document.body.removeChild(link);
   } catch (error) {
-    console.error(error);
-  }
+  console.error(error);
+
+  toast.error("Unable to export CSV");
+}
 };
 const exportPDF = async () => {
   try {
@@ -289,9 +294,26 @@ doc.text(
     console.error(error);
   }
 };
-const handleLogout = () => {
+const [currentUser, setCurrentUser] = useState<any>(null);
+
+const [loading, setLoading] = useState(true);
+const greeting =
+  new Date().getHours() < 12
+    ? "Good Morning"
+    : new Date().getHours() < 17
+    ? "Good Afternoon"
+    : "Good Evening";
+const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+
+const confirmLogout = () => {
   localStorage.removeItem("token");
-  router.push("/login");
+  localStorage.removeItem("user");
+  localStorage.removeItem("civicai-copilot-messages");
+
+  setShowLogoutDialog(false);
+
+  router.replace("/login");
 };
 const handleAIAnalysis = async () => {
   try {
@@ -309,6 +331,7 @@ setIsAnalysisOpen(true);
     setAiError(
       "AI analysis could not be generated. Please try again."
     );
+    toast.error("AI Analysis failed");
   } finally {
     setIsAnalyzing(false);
   }
@@ -378,6 +401,7 @@ const handleSendCopilotMessage = async (
     setCopilotError(
       "CivicAI Copilot could not respond. Please try again."
     );
+    toast.error("Unable to contact AI Copilot");
   } finally {
     setIsCopilotTyping(false);
   }
@@ -442,11 +466,15 @@ const fetchLiveMonitorData = async (
     }
   }
 };
+
 useEffect(() => {
   const fetchStats = async () => {
     try {
       const data = await getDashboardStats();
       setStats(data);
+
+      setLoading(false);
+
       const complaints = await getComplaints();
 
 setActivities(complaints.slice(0, 6));
@@ -609,10 +637,17 @@ if (highPriorityItems.length >= 3 && topRiskCategory) {
 }
     } catch (error) {
       console.error("Failed to load dashboard stats:", error);
+      toast.error("Failed to load dashboard");
+      setLoading(false);
     }
   };
 
   fetchStats();
+  const storedUser = localStorage.getItem("user");
+
+if (storedUser) {
+  setCurrentUser(JSON.parse(storedUser));
+}
 }, []);
 useEffect(() => {
   const handleEscapeKey = (event: KeyboardEvent) => {
@@ -856,43 +891,131 @@ useEffect(() => {
         <header className="sticky top-4 z-30 flex items-center justify-between rounded-3xl border border-slate-800/80 bg-slate-900/70 px-5 py-4 backdrop-blur-2xl shadow-[0_10px_40px_rgba(0,0,0,0.25)]">
           <div>
             <h1 className="text-xl font-bold text-white">
-              CivicAI Command Center
-            </h1>
+  {greeting},{" "}
+  {currentUser?.name?.split(" ")[0] || "Admin"} 👋
+</h1>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="relative">
+            <div className="relative group">
 
-  <button className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900/60 transition hover:border-cyan-400 hover:bg-slate-800">
-
+  <button
+    className="relative flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-700 bg-slate-900/60 transition-all duration-300 hover:border-cyan-400 hover:bg-slate-800"
+  >
     🔔
 
+    <span className="absolute right-1 top-1 h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></span>
   </button>
 
-  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-    3
-  </span>
+  <div
+    className="invisible absolute right-0 mt-3 w-80 rounded-2xl border border-slate-700 bg-slate-900 opacity-0 shadow-2xl transition-all duration-200 group-hover:visible group-hover:opacity-100"
+  >
+    <div className="border-b border-slate-800 p-4">
+      <h3 className="font-semibold text-white">
+        Notifications
+      </h3>
+
+      <p className="text-xs text-slate-400">
+        Latest complaint activity
+      </p>
+    </div>
+
+    <div className="space-y-1 p-2">
+
+  {latestNotifications.length === 0 ? (
+
+    <div className="rounded-xl p-4 text-center text-slate-400">
+      No recent notifications
+    </div>
+
+  ) : (
+
+    latestNotifications.map((item) => (
+
+      <div
+        key={item._id}
+        className="rounded-xl p-3 transition hover:bg-slate-800"
+      >
+        <p className="line-clamp-1 text-sm font-medium text-white">
+          {item.title}
+        </p>
+
+        <p className="mt-1 text-xs text-slate-400">
+          {item.status} • {item.priority || "Normal"} Priority
+        </p>
+
+        <span className="mt-1 block text-xs text-slate-500">
+          {new Date(item.createdAt).toLocaleString()}
+        </span>
+
+      </div>
+
+    ))
+
+  )}
 
 </div>
-            <div className="text-right">
-              <p className="text-sm font-semibold text-white">
-                Faizal
-              </p>
+    <div className="border-t border-slate-800 p-3">
+      <button
+        className="w-full rounded-xl bg-cyan-500 py-2 text-sm font-semibold text-slate-950 hover:bg-cyan-400"
+      >
+        View All
+      </button>
+    </div>
 
-              <p className="text-xs text-slate-400">
-                System Admin
-              </p>
-            </div>
+  </div>
 
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white font-bold">
-              F
-            </div>
-            <button
-  onClick={handleLogout}
-  className="rounded-xl bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
->
-  Logout
-</button>
+</div>
+            <div className="relative group">
+
+  <button
+    className="flex items-center gap-3 rounded-2xl border border-slate-700 bg-slate-900/60 px-3 py-2 transition hover:border-cyan-400 hover:bg-slate-800"
+  >
+    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 font-bold text-white">
+     {currentUser?.name?.charAt(0).toUpperCase() || "G"}
+    </div>
+
+    <div className="text-left">
+      <p className="text-sm font-semibold text-white">
+        {currentUser?.name || "Guest"}
+      </p>
+
+      <p className="text-xs text-slate-400">
+       {currentUser?.email || "Not Logged In"}
+      </p>
+    </div>
+
+    <span className="text-slate-400">
+      ▼
+    </span>
+  </button>
+
+  <div
+    className="invisible absolute right-0 mt-2 w-56 rounded-2xl border border-slate-700 bg-slate-900 opacity-0 shadow-2xl transition-all duration-200 group-hover:visible group-hover:opacity-100"
+  >
+    <button
+      className="block w-full px-5 py-3 text-left text-white hover:bg-slate-800"
+    >
+      👤 My Profile
+    </button>
+
+    <button
+      className="block w-full px-5 py-3 text-left text-white hover:bg-slate-800"
+    >
+      ⚙ Settings
+    </button>
+
+    <hr className="border-slate-700" />
+
+    <button
+      onClick={() => setShowLogoutDialog(true)}
+      className="block w-full px-5 py-3 text-left text-red-400 hover:bg-red-500/10"
+    >
+      Logout
+    </button>
+  </div>
+
+</div>
           </div>
         </header>
 
@@ -902,9 +1025,9 @@ useEffect(() => {
           transition={{ duration: 0.8 }}
           className="mt-12 mb-10"
         >
-          <p className="text-sm uppercase tracking-[0.3em] text-slate-500">
-            Civic Intelligence Platform
-          </p>
+          <p className="text-sm uppercase tracking-[0.3em] text-cyan-400">
+  Real-Time AI Powered Civic Operations
+</p>
 
           <h1 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight text-white md:text-5xl xl:text-7xl">
             Smart Civic Complaint Management
@@ -2155,6 +2278,16 @@ useEffect(() => {
     </motion.aside>
   </>
 )}
+<ConfirmDialog
+  open={showLogoutDialog}
+  title="Logout from CivicAI"
+  message="Are you sure you want to logout? You will need to sign in again to access your dashboard."
+  confirmText="Logout"
+  cancelText="Stay"
+  onCancel={() => setShowLogoutDialog(false)}
+  onConfirm={confirmLogout}
+/>
     </main>
+    
   )
 }

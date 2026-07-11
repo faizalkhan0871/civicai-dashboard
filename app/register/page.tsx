@@ -1,12 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
-
+import { toast } from "sonner";
 export default function RegisterPage() {
   const router = useRouter();
+  useEffect(() => {
+  const token = localStorage.getItem("token");
 
+  if (token) {
+    router.replace("/dashboard");
+  } else {
+    setCheckingAuth(false);
+  }
+}, [router]);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +33,7 @@ export default function RegisterPage() {
         password,
       });
 
-      alert("Registration Successful ✅");
+      toast.success("Account created successfully!");
 
       router.push("/login");
     } catch (err: any) {
@@ -32,12 +41,20 @@ export default function RegisterPage() {
   console.log(err.response);
   console.log(err.response?.data);
 
-  alert(err?.response?.data?.message || "Registration Failed");
+  toast.error(
+  err?.response?.data?.message || "Registration failed"
+);
 }finally {
       setLoading(false);
     }
   };
-
+if (checkingAuth) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-950">
+      <p className="text-slate-300 text-lg">Loading...</p>
+    </div>
+  );
+}
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-950">
       <form

@@ -1,6 +1,8 @@
 "use client";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
   getComplaints,
   deleteComplaint,
@@ -10,8 +12,11 @@ export default function ComplaintsPage() {
   const [complaints, setComplaints] = useState<any[]>([]);
   const [editingId, setEditingId] = useState("");
 const [editingStatus, setEditingStatus] = useState("");
+const [showStatusModal, setShowStatusModal] = useState(false);
 const [search, setSearch] = useState("");
 const [filter, setFilter] = useState("All");
+const [deleteId, setDeleteId] = useState("");
+const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 const resolvedComplaints = complaints.filter(
   (c) => c.status === "Resolved"
 );
@@ -42,12 +47,6 @@ const filteredComplaints = complaints.filter((complaint) => {
   return matchesSearch;
 });
 const handleDelete = async (id: string) => {
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this complaint?"
-  );
-
-  if (!confirmDelete) return;
-
   try {
     await deleteComplaint(id);
 
@@ -55,10 +54,14 @@ const handleDelete = async (id: string) => {
       prev.filter((complaint) => complaint._id !== id)
     );
 
-    alert("Complaint deleted successfully");
+    toast.success("Complaint deleted successfully");
+
+    setShowDeleteDialog(false);
+    setDeleteId("");
+
   } catch (error) {
     console.error(error);
-    alert("Failed to delete complaint");
+    toast.error("Failed to delete complaint");
   }
 };
 const handleUpdateStatus = async () => {
@@ -75,13 +78,13 @@ const handleUpdateStatus = async () => {
       )
     );
 
-    alert("Complaint updated successfully");
+    toast.success("Complaint updated successfully");
 
     setEditingId("");
     setEditingStatus("");
   } catch (error) {
     console.error(error);
-    alert("Update failed");
+    toast.error("Failed to update complaint");
   }
 };
 useEffect(() => {
@@ -93,10 +96,10 @@ useEffect(() => {
     const fetchComplaints = async () => {
       try {
         const data = await getComplaints();
-        console.log("Complaints:", data);
+        
         setComplaints(data);
       } catch (error) {
-        console.error(error);
+        console.error("Failed to fetch complaints", error);
       }
     };
 
@@ -152,10 +155,10 @@ useEffect(() => {
 
     <input
   type="text"
-  placeholder="🔍 Search complaints..."
+  placeholder="Search by title or location..."
   value={search}
   onChange={(e) => setSearch(e.target.value)}
-  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 py-4 text-white outline-none transition focus:border-cyan-400 lg:max-w-md"
+  className="w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 py-4 text-white shadow-sm outline-none transition-all duration-300 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 lg:max-w-md"
 />
 
     <div className="flex flex-wrap gap-3">
@@ -212,8 +215,7 @@ useEffect(() => {
 
   <table className="w-full">
 
-    <thead className="border-b border-slate-800 bg-slate-950/50">
-
+    <thead className="sticky top-0 z-10 border-b border-slate-800 bg-slate-950/95 backdrop-blur">
       <tr className="text-left text-slate-400">
 
         <th className="px-6 py-4">ID</th>
@@ -231,7 +233,7 @@ useEffect(() => {
   {filteredComplaints.map((complaint: any) => (
     <tr
       key={complaint._id}
-      className="border-b border-slate-800 hover:bg-slate-800/30 transition"
+      className="border-b border-slate-800 transition-all duration-300 hover:bg-slate-800/40"
     >
       <td className="px-6 py-5 font-semibold">
         {complaint._id.slice(-6)}
@@ -246,12 +248,32 @@ useEffect(() => {
       </td>
 
       <td className="px-6 py-5">
-        {complaint.priority}
-      </td>
+  <span
+    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+      complaint.priority === "High"
+        ? "bg-red-500/20 text-red-400"
+        : complaint.priority === "Medium"
+        ? "bg-yellow-500/20 text-yellow-400"
+        : "bg-emerald-500/20 text-emerald-400"
+    }`}
+  >
+    {complaint.priority}
+  </span>
+</td>
 
       <td className="px-6 py-5">
-        {complaint.status}
-      </td>
+  <span
+    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+      complaint.status === "Resolved"
+        ? "bg-emerald-500/20 text-emerald-400"
+        : complaint.status === "Pending"
+        ? "bg-orange-500/20 text-orange-400"
+        : "bg-cyan-500/20 text-cyan-400"
+    }`}
+  >
+    {complaint.status}
+  </span>
+</td>
       <td className="px-6 py-5 flex gap-2">
 
   <button
@@ -272,7 +294,10 @@ useEffect(() => {
 </button>
 
   <button
-    onClick={() => handleDelete(complaint._id)}
+    onClick={() => {
+  setDeleteId(complaint._id);
+  setShowDeleteDialog(true);
+}}
     className="rounded-lg bg-red-500 px-3 py-2 text-white hover:bg-red-600"
   >
     Delete
@@ -421,6 +446,15 @@ useEffect(() => {
 </motion.section>
 
       </div>
+      <ConfirmDialog
+  open={showDeleteDialog}
+  title="Delete Complaint"
+  message="Are you sure you want to permanently delete this complaint?"
+  confirmText="Delete"
+  cancelText="Cancel"
+  onCancel={() => setShowDeleteDialog(false)}
+  onConfirm={() => handleDelete(deleteId)}
+/>
     </main>
   );
 }
