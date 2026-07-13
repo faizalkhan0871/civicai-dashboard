@@ -2,6 +2,7 @@ const Complaint = require("../models/Complaint");
 
 // Create Complaint
 const createComplaint = async (req, res) => {
+  console.log("Request Body:", req.body);
   try {
     const complaint = await Complaint.create(req.body);
 

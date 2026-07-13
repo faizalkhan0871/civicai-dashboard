@@ -25,10 +25,13 @@ const registerUser = async (req, res) => {
     });
 
     res.status(201).json({
-      message: "User Registered Successfully",
-      user,
-    });
-
+  message: "User Registered Successfully",
+  user: {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+  },
+});
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -44,7 +47,7 @@ const loginUser = async (req, res) => {
 
     const user = await User.findOne({ email });
 
-    console.log("USER FOUND:", user);
+    
 
     if (!user) {
       return res.status(400).json({
@@ -52,12 +55,11 @@ const loginUser = async (req, res) => {
       });
     }
 
-    console.log("Entered Password:", password);
-    console.log("DB Hash:", user.password);
+    
 
     const isMatch = await bcrypt.compare(password, user.password);
 
-    console.log("Password Match:", isMatch);
+    
 
     if (!isMatch) {
       return res.status(400).json({
@@ -76,10 +78,14 @@ const loginUser = async (req, res) => {
     );
 
     res.status(200).json({
-      message: "Login Successful",
-      token,
-      user,
-    });
+  message: "Login Successful",
+  token,
+  user: {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+  },
+});
 
   } catch (error) {
     res.status(500).json({

@@ -17,6 +17,7 @@ const [search, setSearch] = useState("");
 const [filter, setFilter] = useState("All");
 const [deleteId, setDeleteId] = useState("");
 const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+const [loading, setLoading] = useState(true);
 const resolvedComplaints = complaints.filter(
   (c) => c.status === "Resolved"
 );
@@ -82,29 +83,42 @@ const handleUpdateStatus = async () => {
 
     setEditingId("");
     setEditingStatus("");
+    setShowStatusModal(false);
   } catch (error) {
-    console.error(error);
+    console.warn(error);
     toast.error("Failed to update complaint");
   }
 };
-useEffect(() => {
-  if (editingId && editingStatus) {
-    handleUpdateStatus();
-  }
-}, [editingStatus]);
+
   useEffect(() => {
     const fetchComplaints = async () => {
+      setLoading(true);
       try {
         const data = await getComplaints();
         
         setComplaints(data);
+        setLoading(false);
       } catch (error) {
         console.error("Failed to fetch complaints", error);
+        toast.error("Unable to load complaints");
+setLoading(false);
       }
     };
 
     fetchComplaints();
   }, []);
+  if (loading) {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#020617]">
+      <div className="text-center">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-cyan-500 border-t-transparent" />
+        <p className="mt-5 text-slate-400">
+          Loading complaints...
+        </p>
+      </div>
+    </main>
+  );
+}
   return (
     <main className="min-h-screen bg-[#020617] text-white">
       <div className="mx-auto max-w-7xl px-8 py-10">
@@ -278,15 +292,9 @@ useEffect(() => {
 
   <button
   onClick={() => {
-    const status = prompt(
-      "Enter status: Pending, In Progress, Resolved",
-      complaint.status
-    );
-
-    if (!status) return;
-
     setEditingId(complaint._id);
-    setEditingStatus(status);
+    setEditingStatus(complaint.status);
+    setShowStatusModal(true);
   }}
   className="rounded-lg bg-blue-500 px-3 py-2 text-white hover:bg-blue-600"
 >
@@ -455,6 +463,52 @@ useEffect(() => {
   onCancel={() => setShowDeleteDialog(false)}
   onConfirm={() => handleDelete(deleteId)}
 />
+{showStatusModal && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div className="w-full max-w-md rounded-2xl bg-slate-900 p-6 shadow-xl">
+      <h2 className="text-2xl font-bold text-white">
+        Update Complaint Status
+      </h2>
+
+      <p className="mt-2 text-slate-400">
+        Select the new complaint status.
+      </p>
+
+      <select
+        value={editingStatus}
+        onChange={(e) => setEditingStatus(e.target.value)}
+        className="mt-6 w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 text-white"
+      >
+        <option value="Pending">Pending</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+      </select>
+
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          onClick={() => {
+            setShowStatusModal(false);
+            setEditingId("");
+            setEditingStatus("");
+          }}
+          className="rounded-xl border border-slate-700 px-5 py-2 text-white"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={async () => {
+            await handleUpdateStatus();
+            setShowStatusModal(false);
+          }}
+          className="rounded-xl bg-cyan-500 px-5 py-2 font-semibold text-slate-950"
+        >
+          Save
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </main>
   );
 }

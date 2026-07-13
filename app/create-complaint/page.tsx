@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { createComplaint } from "@/services/complaintService";
 import { uploadComplaintImage } from "@/services/uploadService";
-
+import { toast } from "sonner";
 export default function CreateComplaintPage() {
     const [formData, setFormData] = useState({
   title: "",
@@ -13,9 +13,34 @@ export default function CreateComplaintPage() {
 });
 const [selectedImage, setSelectedImage] = useState<File | null>(null);
 const [imagePreview, setImagePreview] = useState<string | null>(null);
+const [loading, setLoading] = useState(false);
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
+  if (!formData.title.trim()) {
+  toast.error("Title is required");
+  return;
+}
 
+if (formData.title.trim().length < 5) {
+  toast.error("Title must be at least 5 characters");
+  return;
+}
+
+if (!formData.description.trim()) {
+  toast.error("Description is required");
+  return;
+}
+
+if (formData.description.trim().length < 10) {
+  toast.error("Description must be at least 10 characters");
+  return;
+}
+
+if (!formData.location.trim()) {
+  toast.error("Location is required");
+  return;
+}
+setLoading(true);
   try {
     let imagePath = "";
 
@@ -35,7 +60,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     console.log(response);
 
-    alert("Complaint Created Successfully ✅");
+    toast.success("Complaint submitted successfully");
 
     // Step 3: Reset form
     setFormData({
@@ -49,10 +74,24 @@ const handleSubmit = async (e: React.FormEvent) => {
     setSelectedImage(null);
     setImagePreview(null);
 
-  } catch (error) {
-    console.error(error);
-    alert("Failed to create complaint");
+  } catch (error: any) {
+  if (error.response?.status === 400) {
+    const errors = error.response.data?.errors;
+
+    if (errors?.length) {
+      toast.error(errors[0].msg);
+    } else {
+      toast.error("Invalid form data");
+    }
+  } else {
+    toast.error(
+  error.response?.data?.message ||
+  "Failed to create complaint"
+);
   }
+} finally {
+  setLoading(false);
+}
 };
   return (
     <main className="min-h-screen bg-[#020617] text-white">
@@ -77,6 +116,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     <input
   type="text"
+  autoFocus
+maxLength={100}
   placeholder="Enter complaint title"
   value={formData.title}
   onChange={(e) =>
@@ -93,6 +134,7 @@ const handleSubmit = async (e: React.FormEvent) => {
 
     <textarea
   rows={5}
+  maxLength={1000}
   placeholder="Describe the issue..."
   value={formData.description}
   onChange={(e) =>
@@ -103,6 +145,9 @@ const handleSubmit = async (e: React.FormEvent) => {
   }
   className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 outline-none focus:border-cyan-400"
 />
+<p className="mt-2 text-right text-xs text-slate-400">
+  {formData.description.length}/1000 characters
+</p>
   </div>
 
   <div>
@@ -173,12 +218,28 @@ const handleSubmit = async (e: React.FormEvent) => {
 
   <input
     type="file"
+    disabled={loading}
     accept="image/jpeg,image/png,image/webp"
     onChange={(e) => {
       const file = e.target.files?.[0];
-
       if (!file) return;
 
+if (file.size > 5 * 1024 * 1024) {
+  toast.error("Image size must be less than 5 MB");
+  return;
+}
+const allowedTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+];
+
+if (!allowedTypes.includes(file.type)) {
+  toast.error("Only JPG, PNG and WEBP images are allowed");
+  return;
+}
+
+      
       setSelectedImage(file);
       setImagePreview(URL.createObjectURL(file));
     }}
@@ -188,18 +249,21 @@ const handleSubmit = async (e: React.FormEvent) => {
   {imagePreview && (
     <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700">
       <img
-        src={imagePreview}
-        alt="Complaint preview"
-        className="h-64 w-full object-cover"
-      />
+  src={imagePreview}
+  alt="Complaint preview"
+  loading="lazy"
+  className="h-64 w-full object-cover"
+/>
     </div>
   )}
 </div>
   <button
+  disabled={loading}
     type="submit"
-    className="rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400"
+    aria-busy={loading}
+    className="rounded-xl bg-cyan-500 px-8 py-3 font-semibold text-slate-950 transition hover:bg-cyan-400 disabled:cursor-not-allowed disabled:opacity-50"
   >
-    Submit Complaint
+    {loading ? "Submitting..." : "Submit Complaint"}
   </button>
 
 </form>

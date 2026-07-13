@@ -1,3 +1,8 @@
+const {
+  complaintValidation,
+} = require("../validators/complaintValidator");
+
+const validate = require("../middleware/validationMiddleware");
 const express = require("express");
 
 const protect = require("../middleware/authMiddleware");
@@ -23,10 +28,22 @@ router.get("/activity", protect, getRecentActivity);
 router.get("/", protect, getComplaints);
 
 // Create Complaint
-router.post("/", protect, createComplaint);
+router.post(
+  "/",
+  protect,
+  complaintValidation,
+  validate,
+  createComplaint
+);
 
 // Update Complaint
-router.put("/:id", protect, updateComplaint);
+router.put(
+  "/:id",
+  protect,
+  complaintValidation,
+  validate,
+  updateComplaint
+);
 
 // Delete Complaint
 router.delete("/:id", protect, deleteComplaint);
