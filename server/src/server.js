@@ -1,6 +1,7 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const dotenv = require("dotenv");
+
 const helmet = require("helmet");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
@@ -13,7 +14,7 @@ const path = require("path");
 const dns = require("dns");
 const errorHandler = require("./middleware/errorMiddleware");
 
-dotenv.config();
+
 
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 

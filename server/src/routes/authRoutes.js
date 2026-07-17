@@ -9,6 +9,7 @@ const express = require("express");
 const {
   registerUser,
   loginUser,
+  getSetupStatus,
 } = require("../controllers/authController");
 
 const router = express.Router();
@@ -26,5 +27,8 @@ router.post(
   validate,
   loginUser
 );
-
+router.get(
+  "/setup-status",
+  getSetupStatus
+);
 module.exports = router;

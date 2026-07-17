@@ -335,7 +335,7 @@ onClose();
 
     <div className="mt-4 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950">
       <img
-  src={`http://localhost:5000${complaint.image}`}
+  src={`${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}${complaint.image}`}
   alt="Complaint Evidence"
   onClick={() => setIsImageOpen(true)}
   className="h-72 w-full cursor-zoom-in object-cover transition duration-500 hover:scale-105"
@@ -436,7 +436,7 @@ onClose();
     </button>
 
     <motion.img
-      src={`http://localhost:5000${complaint.image}`}
+      src={`${process.env.NEXT_PUBLIC_API_URL?.replace("/api", "")}${complaint.image}`}
       alt="Complaint Evidence Fullscreen"
       initial={{ scale: 0.85, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}

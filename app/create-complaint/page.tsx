@@ -1,8 +1,14 @@
 "use client";
+
 import { useState } from "react";
 import { createComplaint } from "@/services/complaintService";
 import { uploadComplaintImage } from "@/services/uploadService";
+import {
+  analyzeComplaint,
+  ComplaintAnalysis,
+} from "@/services/aiService";
 import { toast } from "sonner";
+
 export default function CreateComplaintPage() {
     const [formData, setFormData] = useState({
   title: "",
@@ -14,6 +20,41 @@ export default function CreateComplaintPage() {
 const [selectedImage, setSelectedImage] = useState<File | null>(null);
 const [imagePreview, setImagePreview] = useState<string | null>(null);
 const [loading, setLoading] = useState(false);
+const [aiLoading, setAiLoading] = useState(false);
+
+const [aiRecommendation, setAiRecommendation] =
+  useState<ComplaintAnalysis | null>(null);
+const handleSuggestPriority = async () => {
+  if (!formData.title.trim()) {
+    toast.error("Enter complaint title first");
+    return;
+  }
+
+  if (!formData.description.trim()) {
+    toast.error("Enter complaint description first");
+    return;
+  }
+
+  setAiLoading(true);
+
+  try {
+    const response = await analyzeComplaint(
+  formData.title,
+  formData.description
+);
+
+setAiRecommendation(response);
+
+toast.success("AI analysis completed");
+  } catch (error: any) {
+    toast.error(
+      error.response?.data?.message ||
+      "Failed to generate AI recommendation"
+    );
+  } finally {
+    setAiLoading(false);
+  }
+};
 const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   if (!formData.title.trim()) {
@@ -191,11 +232,140 @@ maxLength={100}
     <option value="Medium">Medium</option>
     <option value="High">High</option>
   </select>
+  <button
+  type="button"
+  onClick={handleSuggestPriority}
+  disabled={aiLoading}
+  className="mt-3 rounded-xl bg-violet-600 px-5 py-2 font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-50"
+>
+  {aiLoading ? "Analyzing..." : "✨ Analyze Complaint with AI"}
+</button>
+
+{/* 👇 YE CODE YAHAN PASTE KARNA HAI */}
+
+{aiRecommendation && (
+  <div className="mt-4 rounded-2xl border border-cyan-500 bg-slate-900 p-6">
+    <h3 className="text-xl font-semibold text-cyan-400">
+      🤖 AI Smart Complaint Analysis
+    </h3>
+
+    <div className="mt-5 grid gap-4 sm:grid-cols-2">
+      <div>
+  <p className="text-sm text-slate-400">Severity Score</p>
+  <p className="mt-1 font-semibold text-orange-400">
+    {aiRecommendation.severityScore}/10
+  </p>
 </div>
 
-  <div>
-    <label className="mb-2 block text-sm text-slate-300">
-      Location
+<div>
+  <p className="text-sm text-slate-400">Risk Level</p>
+  <span
+    className={`mt-1 inline-block rounded-full px-3 py-1 text-sm font-semibold ${
+      aiRecommendation.riskLevel === "Critical"
+        ? "bg-red-500/20 text-red-400"
+        : aiRecommendation.riskLevel === "High"
+        ? "bg-orange-500/20 text-orange-400"
+        : aiRecommendation.riskLevel === "Medium"
+        ? "bg-yellow-500/20 text-yellow-300"
+        : "bg-green-500/20 text-green-400"
+    }`}
+  >
+    {aiRecommendation.riskLevel}
+  </span>
+</div>
+
+<div>
+  <p className="text-sm text-slate-400">Response Time</p>
+  <p className="mt-1 font-semibold text-white">
+    {aiRecommendation.responseTime}
+  </p>
+</div>
+
+<div>
+  <p className="text-sm text-slate-400">Citizen Impact</p>
+  <p className="mt-1 font-semibold text-white">
+    {aiRecommendation.citizenImpact}
+  </p>
+</div>
+      <div>
+        <p className="text-sm text-slate-400">Category</p>
+        <p className="mt-1 font-semibold text-white">
+          {aiRecommendation.category}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm text-slate-400">Priority</p>
+        <p className="mt-1 font-semibold text-white">
+          {aiRecommendation.priority}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm text-slate-400">Department</p>
+        <p className="mt-1 font-semibold text-white">
+          {aiRecommendation.department}
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm text-slate-400">Tags</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {aiRecommendation.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-cyan-500/20 px-3 py-1 text-xs text-cyan-300"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+<div className="mt-6">
+  <p className="text-sm text-slate-400">AI Summary</p>
+
+  <p className="mt-2 rounded-xl bg-slate-800 p-3 text-slate-200">
+    {aiRecommendation.summary}
+  </p>
+</div>
+
+<div className="mt-6">
+  <p className="mb-2 text-sm text-slate-400">
+    Suggested Actions
+  </p>
+
+  <ul className="space-y-2">
+    {aiRecommendation.suggestedActions.map((action) => (
+      <li
+        key={action}
+        className="rounded-lg bg-slate-800 px-3 py-2 text-slate-200"
+      >
+        ✅ {action}
+      </li>
+    ))}
+  </ul>
+</div>
+    <button
+      type="button"
+      onClick={() =>
+        setFormData({
+          ...formData,
+          category: aiRecommendation.category,
+          priority: aiRecommendation.priority,
+        })
+      }
+      className="mt-6 rounded-xl bg-cyan-500 px-5 py-2 font-semibold text-slate-950 transition hover:bg-cyan-400"
+    >
+      Apply AI Suggestions
+    </button>
+  </div>
+)}
+</div>
+
+<div>
+  <label className="mb-2 block text-sm text-slate-300">
+    Location
     </label>
 
     <input

@@ -21,6 +21,19 @@ export const updateComplaint = async (
 
   return response.data;
 };
+export const updateComplaintStatus = async (
+  id: string,
+  status: string
+) => {
+  const response = await api.patch(
+    `/complaints/${id}/status`,
+    {
+      status,
+    }
+  );
+
+  return response.data;
+};
 
 export const deleteComplaint = async (id: string) => {
   const response = await api.delete(`/complaints/${id}`);

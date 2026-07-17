@@ -996,16 +996,18 @@ useEffect(() => {
     className="invisible absolute right-0 mt-2 w-56 rounded-2xl border border-slate-700 bg-slate-900 opacity-0 shadow-2xl transition-all duration-200 group-hover:visible group-hover:opacity-100"
   >
     <button
-      className="block w-full px-5 py-3 text-left text-white hover:bg-slate-800"
-    >
-      👤 My Profile
-    </button>
+  onClick={() => router.push("/profile")}
+  className="block w-full px-5 py-3 text-left text-white hover:bg-slate-800"
+>
+  👤 My Profile
+</button>
 
     <button
-      className="block w-full px-5 py-3 text-left text-white hover:bg-slate-800"
-    >
-      ⚙ Settings
-    </button>
+  onClick={() => router.push("/settings")}
+  className="block w-full px-5 py-3 text-left text-white hover:bg-slate-800"
+>
+  ⚙ Settings
+</button>
 
     <hr className="border-slate-700" />
 

@@ -11,6 +11,7 @@ const {
   createComplaint,
   getComplaints,
   updateComplaint,
+  updateComplaintStatus,
   deleteComplaint,
   getDashboardStats,
   getAnalytics,
@@ -43,6 +44,11 @@ router.put(
   complaintValidation,
   validate,
   updateComplaint
+);
+router.patch(
+  "/:id/status",
+  protect,
+  updateComplaintStatus
 );
 
 // Delete Complaint

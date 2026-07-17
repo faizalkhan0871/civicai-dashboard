@@ -93,6 +93,16 @@ setUser(res.data.user);
         >
           {loading ? "Logging in..." : "Login"}
         </button>
+        <p className="mt-6 text-center text-sm text-slate-400">
+  Don't have an account?{" "}
+  <button
+    type="button"
+    onClick={() => router.push("/register")}
+    className="font-semibold text-cyan-400 hover:text-cyan-300"
+  >
+    Create Account
+  </button>
+</p>
       </form>
     </div>
   );

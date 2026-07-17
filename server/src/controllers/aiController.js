@@ -198,7 +198,155 @@ ${message}
     next(error);
   }
 };
+const recommendComplaintPriority = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+    
+
+    if (!title?.trim() || !description?.trim()) {
+      return res.status(400).json({
+        message: "Title and description are required",
+      });
+    }
+    
+if (!process.env.GEMINI_API_KEY) {
+  return res.status(500).json({
+    message: "Gemini API key is not configured",
+  });
+}
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+    
+
+    const prompt = `
+You are an AI assistant for CivicAI.
+
+Analyze this civic complaint.
+
+Title:
+${title}
+
+Description:
+${description}
+
+Return ONLY valid JSON.
+
+{
+  "priority":"Low | Medium | High",
+  "reason":"One short professional reason"
+}
+
+Rules:
+- High = public safety, accident risk, fire, flood, electrical danger, severe road damage.
+- Medium = affects public services but not immediate danger.
+- Low = minor inconvenience.
+- Never return markdown.
+- Never return code block.
+`;
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    const result = JSON.parse(response.text);
+
+    res.json(result);
+
+  } catch (error) {
+    next(error);
+  }
+};
+const analyzeComplaint = async (req, res, next) => {
+  try {
+    const { title, description } = req.body;
+    if (!title?.trim() || !description?.trim()) {
+  return res.status(400).json({
+    message: "Title and description are required",
+  });
+}
+
+if (!process.env.GEMINI_API_KEY) {
+  return res.status(500).json({
+    message: "Gemini API key is not configured",
+  });
+}
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+});
+    const prompt = `
+You are an AI assistant for a civic complaint management system.
+
+Analyze the following civic complaint and respond ONLY in valid JSON.
+
+Complaint Title:
+${title}
+
+Complaint Description:
+${description}
+
+Return ONLY this JSON structure:
+
+{
+  "category": "string",
+  "priority": "Low | Medium | High",
+  "severityScore": 0-10,
+  "riskLevel": "Low | Medium | High | Critical",
+  "responseTime": "Within 2 Hours | Within 24 Hours | Within 3 Days | Within 7 Days",
+  "citizenImpact": "Low | Medium | High",
+  "department": "string",
+  "summary": "A concise one sentence summary.",
+  "suggestedActions": [
+    "action 1",
+    "action 2",
+    "action 3"
+  ],
+  "tags": [
+    "tag1",
+    "tag2",
+    "tag3"
+  ]
+}
+
+Rules:
+- Respond ONLY with JSON.
+- severityScore must be between 0 and 10.
+- If there is danger to life or public safety, set riskLevel to Critical.
+- suggestedActions should be practical actions for the responsible department.
+- tags should be short keywords.
+`;
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+
+    const result = JSON.parse(response.text);
+
+result.severityScore ??= 5;
+result.riskLevel ??= "Medium";
+result.responseTime ??= "Within 3 Days";
+result.citizenImpact ??= "Medium";
+result.summary ??= "";
+result.suggestedActions ??= [];
+result.tags ??= [];
+
+res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 module.exports = {
   analyzeComplaints,
   chatWithCivicAI,
+  recommendComplaintPriority,
+  analyzeComplaint,
 };

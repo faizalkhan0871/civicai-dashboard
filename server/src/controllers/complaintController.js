@@ -1,5 +1,5 @@
 const Complaint = require("../models/Complaint");
-
+const { deleteCloudinaryImage } = require("../utils/cloudinaryUtils");
 // Create Complaint
 const createComplaint = async (req, res) => {
   console.log("Request Body:", req.body);
@@ -31,6 +31,7 @@ const getComplaints = async (req, res) => {
     });
   }
 };
+
 // Update Complaint
 const updateComplaint = async (req, res) => {
   try {
@@ -68,11 +69,17 @@ const deleteComplaint = async (req, res) => {
       });
     }
 
-    await complaint.deleteOne();
+    // Delete image from Cloudinary
+if (complaint.image) {
+  await deleteCloudinaryImage(complaint.image);
+}
 
-    res.status(200).json({
-      message: "Complaint Deleted Successfully",
-    });
+// Delete complaint from MongoDB
+await complaint.deleteOne();
+
+res.status(200).json({
+  message: "Complaint Deleted Successfully",
+});
 
   } catch (error) {
     res.status(500).json({
@@ -172,12 +179,37 @@ const getRecentActivity = async (req, res) => {
     });
   }
 };
+const updateComplaintStatus = async (req, res) => {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({
+        message: "Complaint not found",
+      });
+    }
+
+    complaint.status = req.body.status;
+
+    await complaint.save();
+
+    res.status(200).json({
+      message: "Complaint status updated successfully",
+      complaint,
+    });
+  } catch (error) {
+    res.status(500);
+    throw new Error(error.message);
+  }
+};
 module.exports = {
   createComplaint,
   getComplaints,
   updateComplaint,
+  updateComplaintStatus,
   deleteComplaint,
   getDashboardStats,
   getAnalytics,
   getRecentActivity,
+  
 };

@@ -13,7 +13,7 @@ router.post("/", protect, upload.single("image"), (req, res) => {
 
   res.status(200).json({
     message: "Image uploaded successfully",
-    image: `/uploads/${req.file.filename}`,
+    image: req.file.path,
   });
 });
 

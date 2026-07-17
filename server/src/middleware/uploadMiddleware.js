@@ -1,40 +1,34 @@
 const multer = require("multer");
-const path = require("path");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const cloudinary = require("../config/cloudinary");
 
-// Storage Configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      Date.now() + path.extname(file.originalname)
-    );
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "civicai-complaints",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
   },
 });
 
-// File Filter
-const fileFilter = (req, file, cb) => {
-  const allowed = /jpg|jpeg|png|webp/;
-
-  const ext = allowed.test(
-    path.extname(file.originalname).toLowerCase()
-  );
-
-  const mime = allowed.test(file.mimetype);
-
-  if (ext && mime) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only Images Allowed"));
-  }
-};
-
 const upload = multer({
   storage,
-  fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5 MB
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+    ];
+
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only JPG, PNG and WEBP images are allowed."));
+    }
+  },
 });
 
 module.exports = upload;

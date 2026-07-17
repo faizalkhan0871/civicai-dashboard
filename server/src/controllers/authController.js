@@ -92,7 +92,22 @@ const loginUser = async (req, res) => {
       message: error.message,
     });
   }
-};module.exports = {
+};
+const getSetupStatus = async (req, res) => {
+  try {
+    const userCount = await User.countDocuments();
+
+    res.status(200).json({
+      hasUsers: userCount > 0,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+module.exports = {
   registerUser,
   loginUser,
+  getSetupStatus,
 };
