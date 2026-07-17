@@ -19,6 +19,7 @@ const errorHandler = require("./middleware/errorMiddleware");
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 connectDB();
+console.log("CLIENT_URL =", process.env.CLIENT_URL);
 const app = express();
 app.use(
   helmet({
